@@ -1,5 +1,6 @@
 ---
-title: "derive posterior distribution"
+title: "Project 3 MCMC"
+subtitle: "Derive posterior distribution"
 author: "Yi Huang"
 date: "2023-04-26"
 output: pdf_document
