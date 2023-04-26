@@ -1,6 +1,6 @@
 ---
 title: "Project 3 (A): Baysian modeling of hurrican trajectories"
-output: github_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -36,7 +36,8 @@ includes the following variables
 library(ggplot2)
 dt= read.csv("data/hurrican703.csv")
 ggplot(data=dt, aes(x = Longitude, y = Latitude)) + 
-  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE)
+  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, 
+  z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE)
 library(data.table)
 dt <- as.data.table(dt)
 summary(dt)
@@ -49,7 +50,8 @@ library(maps)
 map <- ggplot(data = dt, aes(x = Longitude, y = Latitude)) + 
   geom_polygon(data = map_data(map = 'world'), aes(x = long, y = lat, group = group))
 map +
-  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE, alpha = 0.75) + 
+  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, 
+  z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE, alpha = 0.75) + 
   ggtitle(paste0("Atlantic Windstorm mean knot"))
 ```
 
@@ -92,7 +94,8 @@ the wind speed of the $i$th hurrican at time $t$. The following Baysian
 model was suggested.
 
 $$Y_{i}(t+6) =\beta_{0,i}+\beta_{1,i}Y_{i}(t) + \beta_{2,i}\Delta_{i,1}(t)+
-\beta_{3,i}\Delta_{i,2}(t) +\beta_{4,i}\Delta_{i,3}(t)  + \mathbf{X}_i\gamma+ \epsilon_{i}(t)$$  
+\beta_{3,i}\Delta_{i,2}(t) +\beta_{4,i}\Delta_{i,3}(t)  + 
+\mathbf{X}_i\gamma+ \epsilon_{i}(t)$$  
 where
 
 $Y_{i}(t)$ the wind speed at time $t$ (i.e. 6 hours earlier),
