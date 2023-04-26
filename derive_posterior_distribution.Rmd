@@ -1,0 +1,54 @@
+---
+title: "derive posterior distribution"
+author: "Yi Huang"
+date: "2023-04-26"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+The suggested Bayesian model 
+
+$$Y_{i}(t+6) =\beta_{0,i}+\beta_{1,i}Y_{i}(t) + \beta_{2,i}\Delta_{i,1}(t)+
+\beta_{3,i}\Delta_{i,2}(t) +\beta_{4,i}\Delta_{i,3}(t) + X_i\gamma + \epsilon_{i}(t)$$  
+
+$Y_{i}(t)$ the wind speed at time $t$ (i.e. 6 hours earlier),  
+
+$\Delta_{i,1}(t)$, $\Delta_{i,2}(t)$ and $\Delta_{i,3}(t)$ are the changes of latitude, longitude and wind speed between $t$ and $t+6$, 
+
+$\mathbf{X}_i = (x_{i,1},x_{i,2},x_{i,3})$ are covariates with fixed effect $\gamma$, where $x_{i,1}$ be the month of year when the $i$-th hurricane started, $x_{i,2}$ be the calendar year of the $i$ hurricane, and $x_{i,3}$ be the type of the $i$-th hurricane. 
+
+and $\epsilon_{i,t}$ follows a  normal distributions with mean zero and variance $\sigma^2$, independent across $t$. 
+
+
+In the model,  $\boldsymbol{\beta}_{i} =  (\beta_{0,i},\beta_{1,i},...,\beta_{7,i})$ are the random coefficients associated the $i$th hurricane, we assume that 
+
+$$\boldsymbol{\beta}_{i} \sim N(\boldsymbol{\mu}, \boldsymbol{\Sigma})$$
+follows a multivariate normal distributions with mean $\boldsymbol{\beta}$ and covariance matrix $\Sigma$.
+
+
+\paragraph{Prior distributions}
+
+1. $\boldsymbol{\mu}$: a normal distribution with mean vector $\boldsymbol{0}$ and variance-covariance matrix $\boldsymbol{V}$, reflecting the prior knowledge that the mean coefficients should be centered around zero but allowing for some variability across hurricanes. The variance-covariance matrix $\boldsymbol{V}$ can be set to a diagonal matrix with large variances on the diagonal and small covariances off-diagonal, reflecting the prior knowledge that the coefficients may have some correlation but are largely independent across hurricanes.
+
+$$\quad P(\boldsymbol{\mu})\propto 1$$
+
+2. $\boldsymbol{\Sigma}$: an inverse-Wishart distribution with degrees of freedom $\nu$ and scale matrix $\boldsymbol{S}$, reflecting the prior knowledge that the covariance matrix of the coefficients should be positive definite and have some structure. The degrees of freedom $\nu$ can be set to a small value (e.g., 5) to reflect a relatively weak prior, while the scale matrix $\boldsymbol{S}$ can be set to a diagonal matrix with large variances on the diagonal and small covariances off-diagonal, reflecting the prior knowledge that the covariance matrix should be diagonal or nearly diagonal.
+
+$$\quad P(\Sigma^{-1}) \propto 
+|\Sigma|^{-\frac{(v+d+1)}{2}} \exp(-\frac{1}{2}tr(S\Sigma^{-1}))$$
+where $d$ is dimension of scale matrix $\boldsymbol{S}$
+
+3. All the fixed effects $\gamma \sim N(0, 0.05^2)$
+
+$$P(\gamma) \propto exp(-\frac{\gamma^2}{2*(0.05)^2}) =e^{-200\gamma^2}$$
+
+4. $\sigma$: a half-Cauchy distribution with scale parameter 10, reflecting the prior knowledge that the residual variance should be positive and large enough to account for any unexplained variability in the wind speed data.
+
+$$P(\sigma^2) \propto \frac{1}{\sigma^2+\alpha^2}$$
+  where $\alpha=10$\
+
+
