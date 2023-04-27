@@ -96,16 +96,32 @@ mu_est = function(B, sigma_inv){
 ```
 
 ```{r}
+##sigma_inv
+
+sigma_inv=function(B, mu_est) {
+  N = nrow(B) # n is number of hurricane
+  S = diag(0,5)
+}
+
+
+
+
+```
+
+
+
+```{r}
 ## gamma 
 
-gamma=function(z_dat, y_dat,x_dat, sigma_sq) {
+gamma=function(B,z_dat, y_dat,x_dat, sigma_sq) {
   z = as.matrix(z_dat[[i]])
   y = as.vector(y_dat[[i]])
   x= as.matrix(x_dat[[i]])
   n = length(z_dat)
   a = sigma_sq^(-1) * t(x) %*% x + 400*diag(n)
   b=solve(a)
-  c= sigma_sq^(-1)*
+  c= sigma_sq^(-1)*(colSums(t(y)%*%x)-colSums(x%*%z%*%B)) ## 这个三个矩阵相乘能这么写嘛
+  gamma_est=mvrnorm(mu=b%*%t(c),Sigma = b)
 }
 
 
