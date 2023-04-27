@@ -53,7 +53,7 @@ follows a multivariate normal distributions with mean $\boldsymbol{\beta}$ and c
 
 1. $\boldsymbol{\mu}$: a normal distribution with mean vector $\boldsymbol{0}$ and variance-covariance matrix $\boldsymbol{V}$, reflecting the prior knowledge that the mean coefficients should be centered around zero but allowing for some variability across hurricanes. The variance-covariance matrix $\boldsymbol{V}$ can be set to a diagonal matrix with large variances on the diagonal and small covariances off-diagonal, reflecting the prior knowledge that the coefficients may have some correlation but are largely independent across hurricanes.
 
-$$\quad P(\boldsymbol{\mu}) = \frac{1}{\sqrt{2\pi}|\boldsymbol V|}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\propto |\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\} \propto 1 \tag{2}$$
+$$\quad P(\boldsymbol{\mu}) = \frac{1}{\sqrt{2\pi}|\boldsymbol V|}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\propto |\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\tag{2}$$
 where $|\boldsymbol V|$ is the deteriminant of $\boldsymbol V$
 
 2. $\boldsymbol{\Sigma}$: an inverse-Wishart distribution with degrees of freedom $\nu$ and scale matrix $\boldsymbol{S}$, reflecting the prior knowledge that the covariance matrix of the coefficients should be positive definite and have some structure. The degrees of freedom $\nu$ can be set to a small value (e.g., 5) to reflect a relatively weak prior, while the scale matrix $\boldsymbol{S}$ can be set to a diagonal matrix with large variances on the diagonal and small covariances off-diagonal, reflecting the prior knowledge that the covariance matrix should be diagonal or nearly diagonal.
@@ -68,8 +68,8 @@ $$P(\gamma) \propto exp(-\frac{\gamma^2}{2*(0.05)^2}) =e^{-200\gamma^2}\tag{4}$$
 
 4. $\sigma$: a half-Cauchy distribution with scale parameter 10, reflecting the prior knowledge that the residual variance should be positive and large enough to account for any unexplained variability in the wind speed data.
 
-$$\sigma^2 \sim HC(\alpha=10)$$
-$$P(\sigma^2) = \frac{2\alpha}{\pi+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2}\tag{5}$$
+$$\sigma \sim HC(\alpha=10)$$
+$$P(\sigma) = \frac{2\alpha}{\pi+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2}\tag{5}$$
 
 
 \newpage
@@ -134,7 +134,7 @@ $$
 P(\Theta|Y) = & P(B, \mu, \sigma^2, A, \gamma|Y) \\ 
 &\propto L(Y| B, \sigma^2)p(\sigma^2)p(\mu)p(A)p(\gamma)\\
 &\propto \frac{1}{\sigma^{\frac{N}{2}}(\sigma^2+10^2)^N} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}\\
-&\times \prod_{i=1}^n\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\} |A|^{\frac{N+d+6}{2}} \exp\{-\frac{1}{2}tr(SA)\}
+&\times \prod_{i=1}^n\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\} |A|^{\frac{N+d+6}{2}} \exp\{-\frac{1}{2}tr(SA)\}|\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}e^{-200\gamma^2}
 \end{aligned}
 \tag{9}
 $$
