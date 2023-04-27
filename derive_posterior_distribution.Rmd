@@ -118,7 +118,7 @@ The prior for $\boldsymbol B$ is, $A=\Sigma^{-1}$
 $$
 \begin{aligned}
 P(\boldsymbol B|\mu, \Sigma^{-1}) \propto & \prod_{i=1}^n|\Sigma|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top\Sigma^{-1}(\beta_i-\mu)\}\\
-= & |A|^{-\frac{N}{2}}\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\}
+= & |A|^{\frac{N}{2}}\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\}
 \end{aligned}
 \tag{8}
 $$
