@@ -109,7 +109,6 @@ sigma_inv=function(B, mu_est) {
 ```
 
 
-
 ```{r}
 ## gamma 
 
