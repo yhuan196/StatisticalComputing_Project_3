@@ -88,8 +88,25 @@ B = function(z_dat, y_dat,x_dat,mu_est, sigma_sq, sigma_inv,gamma){
 ## Mu
 mu_est = function(B, sigma_inv){
   N = nrow(B)
-  mu = mvrnorm(1, col_mu, sigma_inv / n) 
+  me= solve(N*sigma_inv)
+  M = sigma_inv %*% colSums(B)
+  mu = mvrnorm(mu = me%*%t(M), Sigma = me)
   return(mu)
 }
 ```
 
+```{r}
+## gamma 
+
+gamma=function(z_dat, y_dat,x_dat, sigma_sq) {
+  z = as.matrix(z_dat[[i]])
+  y = as.vector(y_dat[[i]])
+  x= as.matrix(x_dat[[i]])
+  n = length(z_dat)
+  a = sigma_sq^(-1) * t(x) %*% x + 400*diag(n)
+  b=solve(a)
+  c= sigma_sq^(-1)*
+}
+
+
+```
