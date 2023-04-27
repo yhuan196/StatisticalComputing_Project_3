@@ -1,0 +1,127 @@
+---
+title: "mcmc"
+output: github_document
+date: "2023-04-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(tidyverse)
+library(lubridate)
+library(MASS)
+library(progress)
+library(foreach)
+library(doParallel)
+library(pracma)
+library(gsubfn)
+numCores = detectCores()
+registerDoParallel(numCores) 
+```
+
+```{r}
+data_hurr=read_csv("data/hurrican703.csv")%>%
+  janitor::clean_names() %>%
+  # reformat the time 
+  tidyr::separate(
+    time, c('Date', 'Time'), 
+    sep = ' ', extra = 'merge') %>% 
+  tidyr::separate(
+    Date, c('year_num', 'month_num', 'day'), 
+    sep = '-', extra = 'merge') %>% 
+  tidyr::separate(
+    Time, c('hour', 'min', 'sec'), 
+    sep =':', extra = 'merge')  %>%
+  mutate(
+    year_num=gsub('[^[:alnum:] ]',"",year_num),
+    sec=gsub('[^[:alnum:] ]',"",sec)
+  ) %>%
+  dplyr::select(id, nature, latitude, longitude, wind_kt, 
+         season, month, day, hour, min) %>%
+  # filter the time with 6 hours change
+  filter(
+  hour %in% c("00", "06", "12", "18"),
+         min == "00") %>%
+  group_by(id) %>% 
+  # changes 
+  mutate(latitude_d = lead(latitude) - latitude,
+         longitude_d = lead(longitude) - longitude,
+         wind_kt_d = wind_kt - lag(wind_kt),
+         wind_kt_2 = lead(wind_kt)) %>% 
+  na.omit() %>% 
+  mutate(intercept = 1) 
+
+id = table(data_hurr$id) %>% as.data.frame()
+
+#remove ids that has less than 5 observations
+id_rid <- id %>% arrange(Freq) %>% filter(Freq < 5) %>% pull(Var1)
+hurr_dat_rm <- data_hurr %>% filter(!(id %in% c(id_rid))) ##hurr_dat_rm is the final df
+
+```
+
+```{r}
+# B for beta matrix
+B = function(z_dat, y_dat,x_dat,mu_est, sigma_sq, sigma_inv,gamma){
+  res = NULL
+  n = length(z_dat)
+  # Beta_i function ~ N(,)
+  for (i in 1:n){
+    z = as.matrix(z_dat[[i]])
+    y = as.vector(y_dat[[i]])
+    x= as.matrix(x_dat[[i]])
+    k = sigma_inv + sigma_sq^(-1) * t(z) %*% z
+    m = sigma_sq^(-1) * (t(y) %*% z-(t(x)%*%z)*gamma) + t(mu_est) %*% sigma_inv #(t(x)%*%z)*gamma 这个表达对嘛
+    varcov = solve(k)
+    mu = varcov %*% t(m)
+    bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    res = rbind(res, bi)
+  }
+  
+  return(as.matrix(res))
+}
+```
+
+```{r}
+## Mu
+mu_est = function(B, sigma_inv){
+  N = nrow(B)
+  me= solve(N*sigma_inv)
+  M = sigma_inv %*% colSums(B)
+  mu = mvrnorm(mu = me%*%t(M), Sigma = me)
+  return(mu)
+}
+```
+
+```{r}
+##sigma_inv
+
+sigma_inv=function(B, mu_est) {
+  N = nrow(B) # n is number of hurricane
+  S = diag(0,5)
+}
+
+
+
+
+```
+
+
+```{r}
+## gamma 
+
+gamma=function(B,z_dat, y_dat,x_dat, sigma_sq) {
+  z = as.matrix(z_dat[[i]])
+  y = as.vector(y_dat[[i]])
+  x= as.matrix(x_dat[[i]])
+  n = length(z_dat)
+  a = sigma_sq^(-1) * t(x) %*% x + 400*diag(n)
+  b=solve(a)
+  c= sigma_sq^(-1)*(colSums(t(y)%*%x)-colSums(x%*%z%*%B)) ## 这个三个矩阵相乘能这么写嘛
+  gamma_est=mvrnorm(mu=b%*%t(c),Sigma = b)
+}
+
+
+```
