@@ -117,7 +117,7 @@ The prior for $\boldsymbol B$ is, $A=\Sigma^{-1}$
 
 $$
 \begin{aligned}
-P(\boldsymbol B|\mu, \Sigma^{-1}) \propto & \prod_{i=1}^n|\Sigma|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top\Sigma^{-1}(\beta_i-\mu)\}\\
+P(\boldsymbol B|\mu, \Sigma^{-1}) \propto & \prod_{i=1}^n|\Sigma|^{-\frac{1}{2}}\exp\{-\frac{1}{2}(\beta_i-\mu)^\top\Sigma^{-1}(\beta_i-\mu)\}\\
 = & |A|^{\frac{N}{2}}\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\}
 \end{aligned}
 \tag{8}
@@ -134,7 +134,7 @@ $$
 P(\Theta|Y) = & P(B, \mu, \sigma^2, A, \gamma|Y) \\ 
 &\propto L(Y| B, \sigma^2)L(B|\mu,\Sigma)p(\mu)p(\sigma)p(A)p(\gamma)\\
 &\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}\\
-&\times \prod_{i=1}^n\exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\} |A|^{\frac{N+d+6}{2}} \exp\{-\frac{1}{2}tr(SA)\}|\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}e^{-200\gamma^2}
+&\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\} |A|^{\frac{N+d+6}{2}} \exp\{-\frac{1}{2}tr(SA)\}|\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}e^{-200\gamma^2}
 \end{aligned}
 \tag{9}
 $$
@@ -150,8 +150,8 @@ Implement Gibbs sampler to generate samples from $f(\Theta)$, $\Theta=(B, \mu, \
 $$
 \begin{aligned}
 f(\textbf{B} |\boldsymbol{\mu}, \sigma^2, A, \gamma) &\propto L_{Y}(\textbf{B},  \sigma^2 ) \times P(\textbf{B}\mid \boldsymbol{\mu}, \boldsymbol{\Sigma})\\
-& \propto \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}\exp\{-\frac{1}{2}(\beta_i-\mu)^\top A(\beta_i-\mu)\}\\
-&\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}+(\beta_i-\mu)^\top A(\beta_i-\mu)\}\\
+& \propto \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}\prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol\beta_i-\boldsymbol\mu)^\top A(\boldsymbol\beta_i-\boldsymbol\mu)\big\}\\
+&\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}+(\boldsymbol\beta_i-\boldsymbol\mu)^\top A(\boldsymbol\beta_i-\boldsymbol\mu)\}\\
 &\propto \prod_{i=1}^n \exp\{-\frac{1}{2}\Big(\boldsymbol{Y}_i^\top(\sigma^2 I)^{-1}\boldsymbol{Y}_i 
 - \boldsymbol{Y}_i^\top(\sigma^2 I)^{-1}\boldsymbol{Z}_i\boldsymbol{\beta}_i^\top 
 - \boldsymbol{Y}_i^\top(\sigma^2 I)^{-1}\boldsymbol{X}_i\gamma 
@@ -160,15 +160,15 @@ f(\textbf{B} |\boldsymbol{\mu}, \sigma^2, A, \gamma) &\propto L_{Y}(\textbf{B}, 
 + \boldsymbol{\beta}_i\boldsymbol{Z}_i^\top(\sigma^2 I)^{-1}\boldsymbol{X_i}\gamma
 - \gamma\boldsymbol{X_i}^\top(\sigma^2 I)^{-1}\boldsymbol{Y}_i
 + \gamma \boldsymbol{X}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i\beta_i^\top\\
-&+ \gamma\boldsymbol{X}_i^\top(\sigma I)^{-1}\boldsymbol{Z}_i^\top\beta_i^\top
+&+ \gamma\boldsymbol{X}_i^\top(\sigma^2 I)^{-1}\boldsymbol{Z}_i^\top\beta_i^\top
 + \boldsymbol{\beta}_i^\top\boldsymbol{A}\boldsymbol{\beta}_i
 - \boldsymbol{\beta}_i^\top\boldsymbol{A}\boldsymbol{\mu}
 + \boldsymbol{\mu}^\top\boldsymbol{A}\boldsymbol{\mu} 
 - \boldsymbol{\mu}\boldsymbol{A}\boldsymbol{\beta}_i^\top\} \\ 
-&\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}(\boldsymbol{\beta}_i(\boldsymbol{A}+\boldsymbol{Z}_i^\top(\sigma I)^{-1}Z_i)\boldsymbol{\beta}_i^\top-\gamma^2(\boldsymbol{X}_i^\top) - 2(\boldsymbol{Y}_i^\top(\sigma I)^{-1}\boldsymbol{Z}_i+\gamma \boldsymbol{X}_i^\top(\sigma I)^{-1}\boldsymbol{Z}_i +\boldsymbol{\mu}\boldsymbol{A})\boldsymbol{\beta}_i^\top \\
-&- 2(\boldsymbol{Y}_i^\top(\sigma I)^{-1}\boldsymbol{X}_i)\gamma\}\\
-&\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}[\boldsymbol{\beta}_i-(A+\boldsymbol{Z}_i(\sigma I)^{-1}\boldsymbol{Z}_i)^{-1}(\boldsymbol{Y}_i(\sigma I)^{-1}\boldsymbol{Z}_i+\gamma\boldsymbol{X}_i(\sigma I)^{-1}\boldsymbol{Z}_i + \boldsymbol{\mu}_i^\top\boldsymbol{A})^\top]^\top (A+\boldsymbol{Z}_i(\sigma I)^{-1}\boldsymbol{Z}_i)\\
-& [\boldsymbol{\beta}_i- (A+\boldsymbol{Z}_i(\sigma I)^{-1}\boldsymbol{Z}_i)^{-1}(\boldsymbol{Y}_i(\sigma I)^{-1}\boldsymbol{Z}_i+\gamma\boldsymbol{X}_i(\sigma I)^{-1}\boldsymbol{Z}_i + \boldsymbol{\mu}_i^\top\boldsymbol{A})^\top]\big\}
+&\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}(\boldsymbol{\beta}_i(\boldsymbol{A}+\boldsymbol{Z}_i^\top(\sigma^2 I)^{-1}Z_i)\boldsymbol{\beta}_i^\top-\gamma^2(\boldsymbol{X}_i^\top) - 2(\boldsymbol{Y}_i^\top(\sigma^2 I)^{-1}\boldsymbol{Z}_i+\gamma \boldsymbol{X}_i^\top(\sigma^2 I)^{-1}\boldsymbol{Z}_i +\boldsymbol{\mu}\boldsymbol{A})\boldsymbol{\beta}_i^\top \\
+&- 2(\boldsymbol{Y}_i^\top(\sigma^2 I)^{-1}\boldsymbol{X}_i)\gamma\}\\
+&\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}[\boldsymbol{\beta}_i-(A+\boldsymbol{Z}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i)^{-1}(\boldsymbol{Y}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i+\gamma\boldsymbol{X}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i + \boldsymbol{\mu}_i^\top\boldsymbol{A})^\top]^\top (A+\boldsymbol{Z}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i)\\
+& [\boldsymbol{\beta}_i- (A+\boldsymbol{Z}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i)^{-1}(\boldsymbol{Y}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i+\gamma\boldsymbol{X}_i(\sigma^2 I)^{-1}\boldsymbol{Z}_i + \boldsymbol{\mu}_i^\top\boldsymbol{A})^\top]\big\}
 \end{aligned}
 $$
 
