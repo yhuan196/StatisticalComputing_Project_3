@@ -60,6 +60,13 @@ id = table(data_hurr$id) %>% as.data.frame()
 id_rid <- id %>% arrange(Freq) %>% filter(Freq < 5) %>% pull(Var1)
 hurr_dat_rm <- data_hurr %>% filter(!(id %in% c(id_rid))) ##hurr_dat_rm is the final df
 
+
+# convert month name to number
+month_to_number <- function(month_name) {
+  match(toupper(month_name), toupper(month.name))
+}
+data_hurr <- data_hurr %>%
+  mutate(month_number = month_to_number(month))
 ```
 
 ```{r}
