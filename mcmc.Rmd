@@ -93,9 +93,10 @@ B = function(z_dat, y_dat,x_dat,mu_est, sigma_sq, sigma_inv,gamma){
 
 ```{r}
 ## Mu
-mu_est = function(B, sigma_inv){
+mu_est = function(B, sigma_inv,v){
   N = nrow(B)
-  me= solve(N*sigma_inv)
+  v_inv=solve(v)
+  me= solve(N*sigma_inv-v)
   M = sigma_inv %*% colSums(B)
   mu = mvrnorm(mu = me%*%t(M), Sigma = me)
   return(mu)
@@ -103,15 +104,29 @@ mu_est = function(B, sigma_inv){
 ```
 
 ```{r}
+#sigma_sq
+
+
+
+```
+
+
+
+```{r}
 ##sigma_inv
 
 sigma_inv=function(B, mu_est) {
-  N = nrow(B) # n is number of hurricane
-  S = diag(0,5)
+  N = nrow(B) # N is number of hurricane
+  S = diag(1,5,5)
+  B=as.matrix(B)
+  for (i in 1:N){
+        beta_i = B[i,]
+        S.matrix = S.matrix + (beta_i-mu_est) %*% t(beta_i-mu_est)
+  }
+  v=N+5+1
+sigma= rinvwishart(1, nu = v, Omega = S, checkSymmetry = F)
+return(sigma[,,1])
 }
-
-
-
 
 ```
 
