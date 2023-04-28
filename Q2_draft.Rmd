@@ -1,0 +1,209 @@
+---
+title: "mcmc"
+output: github_document
+date: "2023-04-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyr)
+library(tidyverse)
+library(lubridate)
+library(MASS)
+library(progress)
+library(foreach)
+library(doParallel)
+library(pracma)
+library(gsubfn)
+library(matrixsampling)
+numCores = detectCores()
+registerDoParallel(numCores) 
+```
+
+# clean data
+```{r}
+dat <- read_csv("data/hurrican703.csv")
+summary(dat)
+data=read_csv("data/hurrican703.csv")%>%
+  janitor::clean_names() %>%
+  # reformat the time 
+  tidyr::separate(
+    time, c('Date', 'Time'), 
+    sep = ' ', extra = 'merge') %>% 
+  tidyr::separate(
+    Date, c('year_num', 'month_num', 'day'), 
+    sep = '-', extra = 'merge') %>% 
+  tidyr::separate(
+    Time, c('hour', 'min', 'sec'), 
+    sep =':', extra = 'merge')  %>%
+  mutate(
+    year_num=gsub('[^[:alnum:] ]',"",year_num),
+    sec=gsub('[^[:alnum:] ]',"",sec)
+  ) %>%
+  dplyr::select(id, nature, latitude, longitude, wind_kt, 
+         season, month, day, hour, min) %>%
+  # filter the time with 6 hours change
+  filter(
+  hour %in% c("00", "06", "12", "18"),
+         min == "00") %>%
+  group_by(id) %>% 
+  # changes 
+  mutate(latitude_d = latitude - lag(latitude, 1),
+         longitude_d = longitude - lag(longitude, 1),
+         wind_kt_d = lag(wind_kt, 1) - lag(wind_kt, 2),
+         wind_prev = lag(wind_kt, 1),
+         month = factor(month,levels = month.name)) %>% 
+  na.omit() %>% 
+  mutate(intercept = 1) 
+```
+
+# create dummy variable
+```{r}
+data$index = 1:nrow(data)
+Xi = data %>% 
+  group_by(index) %>% 
+  dplyr::select(nature, season, month,id) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = month, values_from = n, values_fill = 0) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = nature, values_from = n, values_fill = 0) %>% 
+  ungroup() %>% 
+  mutate(reference = January*DS) %>% 
+  dplyr::select(id,reference, April, May, June, July, August, September, October, November, December, season, TS, ET, SS, NR) %>% nest(.by=id) %>% pull()
+
+dim(Xi)
+
+Zi_raw = data %>% 
+  dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id) %>% nest() %>%pull(data)
+
+Zi = data %>% 
+  dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id)
+dim(Zi)
+
+yi_raw=data%>%dplyr::select(wind_kt,id)  %>% nest() %>% pull(data)
+#yi=matrix(as.numeric(yi_raw[,2]),nrow=nrow(yi_raw))
+```
+
+
+# glmm
+```{r}
+glmm.hurricane = lme4::glmer(wind_kt ~ month+season+nature + (1+wind_change+latitude_d+longitude_d+wind_kt_d|id),
+                       family = 'gaussian', data = hurr_dat_rm)
+summary(glmm.hurricane)
+```
+
+
+
+# B matrix
+```{r}
+# B for beta matrix
+B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
+  res = NULL
+  n = length(zdat)
+  # Beta_i function ~ N(,)
+  for (i in 1:n){
+    z = zdat[[i]]
+    y = ydat[[i]]
+    x=  xdat[[i]]
+    k = sigma_inv + sigma^(-2) * (as.matrix(t(z)) %*% as.matrix(z))
+    m = sigma^(-2)*(as.matrix(t(y))%*%as.matrix(z)-as.matrix(t(z))%*%as.matrix(x)%*%gamma) + t(mu_est) %*% sigma_inv 
+    varcov = solve(k)
+    mu = varcov %*% t(m)
+    bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    res = rbind(res, bi)
+  }
+  
+  return(as.matrix(res))
+}
+```
+
+
+```{r}
+#test B
+
+v=5
+S=0.8*diag(5)
+m=rinvwishart(1,nu=v,Omega=S)
+
+ 
+k=diag(2,5,5)
+k+z1
+
+
+gamma=c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+
+```
+
+```{r}
+z=t(Zi)%*%Zi
+z1=2*z
+z1
+m+z1
+```
+
+```{r}
+testB = B(Zi_raw,yi_raw,Xi, mu_est = rep(0,5), sigma= 2,sigma_inv=diag(2,5,5) ,gamma=c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
+
+```
+
+
+
+```{r}
+## Mu
+mu_est = function(B, sigma_inv,v){
+  N = nrow(B)
+  v_inv=solve(v)
+  me= solve(N*sigma_inv-v)
+  M = sigma_inv %*% colSums(B)
+  mu = mvrnorm(mu = me%*%t(M), Sigma = me)
+  return(mu)
+}
+```
+
+```{r}
+#sigma_sq
+
+
+
+```
+
+
+
+```{r}
+##sigma_inv
+
+sigma_inv=function(B, mu_est) {
+  N = nrow(B) # N is number of hurricane
+  S = diag(1,5,5)
+  B=as.matrix(B)
+  for (i in 1:N){
+        beta_i = B[i,]
+        S.matrix = S.matrix + (beta_i-mu_est) %*% t(beta_i-mu_est)
+  }
+  v=N+5+1
+sigma= rinvwishart(1, nu = v, Omega = S, checkSymmetry = F)
+return(sigma[,,1])
+}
+
+```
+
+
+```{r}
+## gamma 
+
+gamma=function(B,z_dat, y_dat,x_dat, sigma_sq) {
+  z = as.matrix(z_dat[[i]])
+  y = as.vector(y_dat[[i]])
+  x= as.matrix(x_dat[[i]])
+  n = length(z_dat)
+  a = sigma_sq^(-1) * t(x) %*% x + 400*diag(n)
+  b=solve(a)
+  c= sigma_sq^(-1)*(colSums(t(y)%*%x)-colSums(x%*%z%*%B)) ## 这个三个矩阵相乘能这么写嘛
+  gamma_est=mvrnorm(mu=b%*%t(c),Sigma = b)
+}
+
+
+```
