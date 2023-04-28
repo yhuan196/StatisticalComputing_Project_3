@@ -133,7 +133,8 @@ k=diag(2,5,5)
 k+z1
 
 
-gamma=c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+gamma <- c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+gamma <- as.vector(c)
 
 ```
 
@@ -154,14 +155,36 @@ testB = B(Zi_raw,yi_raw,Xi, mu_est = rep(0,5), sigma= 2,sigma_inv=diag(2,5,5) ,g
 ```{r}
 ## Mu
 mu_est = function(B, sigma_inv,v){
-  N = nrow(B)
+  N = ncol(B)
   v_inv=solve(v)
-  me= solve(N*sigma_inv-v)
-  M = sigma_inv %*% colSums(B)
-  mu = mvrnorm(mu = me%*%t(M), Sigma = me)
+  me= solve(N*sigma_inv+v_inv)
+  M = colSums(t(B))%*%sigma_inv
+  mean_vec=me%*%t(M)
+  mu = mvrnorm(1,mu = me%*%t(M), Sigma = me)
   return(mu)
 }
+testmu=mu_est(as.matrix(testB),diag(2,5,5),diag(5,5,5))
+testmu=as.matrix(testmu)
 ```
+
+## draft 2
+
+```{r}
+N <- ncol(testB)
+v <- diag(5,5,5)
+sigma_inv <- diag(2,5,5)
+B <- as.matrix(testB)
+dim(B)
+v_inv <- solve(v)
+me <- solve(N*sigma_inv+v_inv)
+dim(me)
+
+M <- sigma_inv*colSums(t(B))
+dim(M)
+mean_vec=me%*%t(M)
+
+```
+
 
 ```{r}
 #sigma_sq
@@ -176,34 +199,117 @@ mu_est = function(B, sigma_inv,v){
 ##sigma_inv
 
 sigma_inv=function(B, mu_est) {
-  N = nrow(B) # N is number of hurricane
-  S = diag(1,5,5)
-  B=as.matrix(B)
+  N = ncol(B) # N is number of hurricane
+  S.matrix = diag(5,5,5)
   for (i in 1:N){
-        beta_i = B[i,]
+        beta_i = as.matrix(B[,i])
         S.matrix = S.matrix + (beta_i-mu_est) %*% t(beta_i-mu_est)
   }
   v=N+5+1
-sigma= rinvwishart(1, nu = v, Omega = S, checkSymmetry = F)
+sigma= rinvwishart(1, nu = v, Omega = S.matrix, checkSymmetry = F)
 return(sigma[,,1])
 }
+testsigmainv=sigma_inv(as.matrix(testB),testmu)
+```
+
+```{r}
+# draft 3
+B=as.matrix(testB)
+N = ncol(B)
+S.matrix=diag(5,5,5)
+beta_1=as.matrix(B[,1])
+beta_1
+```
+
+# gamma ******
+```{r}
+## gamma 
+gamma=function(B,zdat, ydat,xdat, sigma) {
+  n = length(zdat)
+  for (i in 1:n){
+    z = as.matrix(zdat[[i]])
+    y = as.matrix(ydat[[i]])
+    x=  as.matrix(xdat[[i]])
+  a = sigma^(-2) * (t(x) %*% x) + 400*diag(15)
+  b = solve(a)
+  c = sigma^(-2)*as.matrix((colSums(t(y)%*%x))-as.matrix(colSums(t(x)%*%z%*%as.matrix(B[,i])))) 
+  gamma_est = mvrnorm(1,mu=t(c)%*%b,Sigma = b)
+   }
+  
+
+ return(gamma_est)
+}
+testgamma=gamma(testB,Zi_raw,yi_raw,Xi,2)
+testgamma=as.matrix(testgamma)
+```
+
+```{r}
+# draft 4 gamma
+
+
 
 ```
 
 
-```{r}
-## gamma 
 
-gamma=function(B,z_dat, y_dat,x_dat, sigma_sq) {
-  z = as.matrix(z_dat[[i]])
-  y = as.vector(y_dat[[i]])
-  x= as.matrix(x_dat[[i]])
-  n = length(z_dat)
-  a = sigma_sq^(-1) * t(x) %*% x + 400*diag(n)
-  b=solve(a)
-  c= sigma_sq^(-1)*(colSums(t(y)%*%x)-colSums(x%*%z%*%B)) ## 这个三个矩阵相乘能这么写嘛
-  gamma_est=mvrnorm(mu=b%*%t(c),Sigma = b)
+#### draft 1
+
+```{r}
+gamma <- c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+gamma <- as.matrix(gamma)
+dim(gamma)
+
+lxi <- Xi[[1]]
+lzi <- Zi_raw[[1]]
+lyi <- yi_raw[[1]]
+
+lk <- function(sigma_inv, sigma, z){
+  sigma_inv + sigma^(-2) * (as.matrix(t(z)) %*% as.matrix(z))
+  }
+
+nn <- lk(diag(2,5,5), 2, lzi)
+dim(nn)
+
+lm <- function(sigma_inv,sigma, y, z, x, gamma, mu_est) {
+  sigma^(-2)*(as.matrix(t(z))%*%as.matrix(y))-as.matrix(t(z))%*%as.matrix(x)%*%gamma+sigma_inv%*%as.matrix(mu_est)
 }
 
+lm(diag(2,5,5),2,lyi,lzi,lxi,gamma,rep(0,5))  
 
+2^(-2)*(as.matrix(t(lzi))%*%as.matrix(lyi))-as.matrix(t(lzi))%*%as.matrix(lxi)%*%gamma+diag(2,5,5)%*%as.matrix(rep(0,5))
+
+dim(2^(-2)*(as.matrix(t(lzi))%*%as.matrix(lyi)))
+dim(as.matrix(t(lzi))%*%as.matrix(lxi)%*%gamma+diag(2,5,5)%*%as.matrix(rep(0,5)))
+
+
+
+is.matrix(nn)
+
+
+```
+
+```{r}
+# B for beta matrix
+B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
+  res = NULL
+  n = length(zdat)
+  # Beta_i function ~ N(,)
+  for (i in 1:n){
+    z = zdat[[i]]
+    y = ydat[[i]]
+    x=  xdat[[i]]
+    k = sigma_inv + sigma^(-2) * as.matrix(t(z)) %*% as.matrix(z)
+    m = sigma^(-2)*(as.matrix(t(z))%*%as.matrix(y))-as.matrix(t(z))%*%as.matrix(x)%*%gamma+sigma_inv%*%as.matrix(mu_est)
+    varcov = solve(k)
+    mu = t(m)%*%varcov
+    bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    res = rbind(res, bi)
+  }
+  
+  return(as.matrix(res))
+}
+
+testB <- B(Zi_raw,yi_raw,Xi, mu_est = rep(0,5), sigma= 2,sigma_inv=diag(2,5,5) ,gamma)
+
+testB <- data.frame(t(testB))
 ```
