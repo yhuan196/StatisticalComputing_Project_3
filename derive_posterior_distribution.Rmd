@@ -175,7 +175,18 @@ $$
 
 2. Generate $\mu_t$ from $f(\mu_t|B_t, \sigma_{t-1}^2, A_{t-1}, \gamma_{t-1})$
 
+$$
+\begin{aligned}
+f(\mu_t|B_t, \sigma^2, A, \gamma) & \propto P(B\mid \boldsymbol{\mu}, \boldsymbol{\Sigma})P(\boldsymbol\mu)\\
+& \propto \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol\beta_i-\boldsymbol\mu)^\top A(\boldsymbol\beta_i-\boldsymbol\mu)\big\}|\boldsymbol V|^{-\frac{1}{2}}\exp\big\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\big\}\\
+& \propto \boldsymbol|V|^{-\frac{1}{2}}\exp\big\{\frac{1}{2}\sum_i^n(\boldsymbol\beta_i-\boldsymbol\mu)^\top A(\boldsymbol\beta_i-\boldsymbol\mu)\big\}
+\end{aligned}
+$$
+
+
 3. Generate $\sigma_t^2$ from $f(\sigma_t|B_t, \mu_t, A_{t-1}, \gamma_{t-1})$
+
+
 
 4. Generate $A_t$ from $f(A_t|B_t, \mu_t, \sigma_t^2, \gamma_{t-1})$
 
