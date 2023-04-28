@@ -1,0 +1,150 @@
+---
+title: "eda"
+author: "Ruihan Zhang"
+date: "2023-04-27"
+output: html_document
+---
+
+Introduction:
+The United States faces significant social and economic risks from hurricanes, which cause fatalities and property damage through high winds, heavy rain, and storm surges. To address this, there is a growing need to accurately predict hurricane behavior, including location and speed. This project aims to forecast wind speeds by modeling hurricane trajectories using a Hierarchical Bayesian Model. The hurricane data includes specific effects unique to each hurricane, and model integration is achieved through the use of a Markov Chain Monte Carlo algorithm.
+
+Furthermore, we aim to explore seasonal variations in hurricane wind speeds using the Bayesian model previously estimated, and investigate whether there is evidence of increasing wind speeds over time. Additionally, we plan to utilize data on hurricane damages and fatalities in the United States to develop a prediction model. Through this model, we intend to identify the key factors that influence hurricanes and draw meaningful conclusions based on the results.
+
+```{r}
+library(ggplot2)
+dt= read.csv("./data/hurrican703.csv")
+library(data.table)
+dt <- as.data.table(dt)
+summary(dt)
+
+library(tidyverse)
+dt_long <- dt %>%
+    dplyr::group_by(ID) %>% 
+    mutate(Wind_prev = lag(Wind.kt, 1),
+           Lat_change = Latitude - lag(Latitude, 1),
+           Long_change = Longitude - lag(Longitude, 1),
+           Wind_prev_prev = lag(Wind.kt, 2)) %>% 
+    mutate(Wind_change = Wind_prev - Wind_prev_prev)
+```
+
+```{r, echo=FALSE, fig1, fig.height=4, fig.width=7}
+storms_month_name = distinct(group_by(select(dt_long, Month, ID), Month))
+
+storms_month_name %>% 
+  dplyr::group_by(Month) %>% 
+  mutate(Month =  factor(Month, levels = month.name)) %>%  
+  ggplot(aes(x = Month)) +
+  geom_bar()
+```
+\begin{center}
+Figure 1. Count of Hurricanes in Each Month
+\end{center}
+
+
+```{r, echo=FALSE, fig2, fig.height=4, fig.width=7}
+dt_long %>% 
+  dplyr::group_by(Month) %>% 
+  mutate(avg_speed = mean(Wind.kt)) %>% 
+  distinct(Month, avg_speed) %>% 
+  mutate(Month =  factor(Month, levels = month.name))%>% 
+  ggplot(aes(x = Month, y = avg_speed)) +
+  geom_point() +
+  scale_y_continuous("Average Speed (knot)")
+```
+\begin{center}
+Figure 2. Average Speed (knot) of Hurricanes in Each Month
+\end{center}
+If we group the hurricanes by years, we can see in general, we have more observations in recently years compared to 50 years ago as shown in Figure 3. However, from Figure 4, the average wind speed seems to have a decreasing trend.
+
+
+```{r, echo=FALSE, fig3, fig.height=3.8, fig.width=7}
+storms_season_name = distinct(group_by(select(dt_long, Season, ID), Season))
+ggplot(data = storms_season_name) + 
+  geom_bar(aes(x = Season)) +
+  scale_x_continuous("Year")
+```
+\begin{center}
+Figure 3. Count of Hurricanes in Each Year
+\end{center}
+```{r, echo=FALSE, fig4, fig.height=3.8, fig.width=7}
+dt_long %>% 
+  dplyr::group_by(Season) %>% 
+  mutate(avg_speed = mean(Wind.kt)) %>% 
+  distinct(Season, avg_speed) %>% 
+  ggplot(aes(x = Season, y = avg_speed)) +
+  geom_point() +
+  geom_smooth(method = "loess") +
+  scale_y_continuous("Average Speed (knot)") +
+  scale_x_continuous("Year") 
+```
+\begin{center}
+Figure 4. Average Speed (knot) of Hurricanes in Each Year
+\end{center}
+
+```{r, echo=FALSE, fig5, fig.height=3.8, fig.width=7}
+storms_nature_name = distinct(group_by(select(dt_long, Nature, ID), Nature))
+ggplot(data = storms_nature_name) + 
+  geom_bar(aes(x = Nature))
+```
+\begin{center}
+Figure 5. Count of Hurricanes in Each Nature
+\end{center}
+
+```{r, echo=FALSE, fig6, fig.height=3.8, fig.width=7}
+dt_long %>% 
+  dplyr::group_by(Nature) %>% 
+  mutate(avg_speed = mean(Wind.kt)) %>% 
+  distinct(Nature, avg_speed) %>% 
+  ggplot(aes(x = Nature, y = avg_speed)) +
+  geom_point() +
+  scale_y_continuous("Average Speed (knot)")
+```
+\begin{center}
+Figure 6. Average Speed (knot) of Hurricanes in Each Nature
+\end{center}
+
+```{r}
+ggplot(data=dt, aes(x = Longitude, y = Latitude)) + 
+  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE)
+library(data.table)
+dt <- as.data.table(dt)
+summary(dt)
+```
+
+```{r}
+library(maps)
+map <- ggplot(data = dt, aes(x = Longitude, y = Latitude)) + 
+  geom_polygon(data = map_data(map = 'world'), aes(x = long, y = lat, group = group))
+map +
+  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE, alpha = 0.75) + 
+  ggtitle(paste0("Atlantic Windstorm mean knot"))
+```
+
+
+```{r}
+map <- ggplot(dt, aes(x = Longitude, y = Latitude, group = ID)) + 
+  geom_polygon(data = map_data("world"), 
+               aes(x = long, y = lat, group = group), 
+               fill = "gray25", colour = "gray10", size = 0.2) + 
+  geom_path(data = dt, aes(group = ID, colour = Wind.kt), size = 0.5) + 
+  xlim(-138, -20) + ylim(3, 55) + 
+  labs(x = "", y = "", colour = "Wind \n(knots)") + 
+  theme(panel.background = element_rect(fill = "gray10", colour = "gray30"),
+        axis.text.x = element_blank(), axis.text.y = element_blank(), 
+        axis.ticks = element_blank(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+seasonrange <- paste(range(dt[, Season]), collapse=" - ")
+
+map + ggtitle(paste("Atlantic named Windstorm Trajectories (", 
+                     seasonrange, ")\n")) 
+```
+
+
+```{r}
+mapMonth <- map + facet_wrap(~ Month) +
+  ggtitle(paste("Atlantic named Windstorm Trajectories by Month (", 
+                 seasonrange, ")\n")) 
+mapMonth
+```
+

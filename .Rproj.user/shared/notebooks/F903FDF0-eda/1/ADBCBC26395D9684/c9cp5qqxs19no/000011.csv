@@ -1,0 +1,15 @@
+"0","library(maps)"
+"2","
+Attaching package: ‘maps’
+
+"
+"2","The following object is masked from ‘package:purrr’:
+
+    map
+
+"
+"0","map <- ggplot(data = dt, aes(x = Longitude, y = Latitude)) + "
+"0","  geom_polygon(data = map_data(map = 'world'), aes(x = long, y = lat, group = group))"
+"0","map +"
+"0","  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE, alpha = 0.75) + "
+"0","  ggtitle(paste0(""Atlantic Windstorm mean knot""))"

@@ -1,0 +1,8 @@
+"0","dt_long %>% "
+"0","  dplyr::group_by(Month) %>% "
+"0","  mutate(avg_speed = mean(Wind.kt)) %>% "
+"0","  distinct(Month, avg_speed) %>% "
+"0","  mutate(Month =  factor(Month, levels = month.name))%>% "
+"0","  ggplot(aes(x = Month, y = avg_speed)) +"
+"0","  geom_point() +"
+"0","  scale_y_continuous(""Average Speed (knot)"")"

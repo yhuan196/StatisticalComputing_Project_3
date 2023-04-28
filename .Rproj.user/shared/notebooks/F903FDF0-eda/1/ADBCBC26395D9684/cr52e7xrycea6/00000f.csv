@@ -1,0 +1,7 @@
+"0","dt_long %>% "
+"0","  dplyr::group_by(Nature) %>% "
+"0","  mutate(avg_speed = mean(Wind.kt)) %>% "
+"0","  distinct(Nature, avg_speed) %>% "
+"0","  ggplot(aes(x = Nature, y = avg_speed)) +"
+"0","  geom_point() +"
+"0","  scale_y_continuous(""Average Speed (knot)"")"

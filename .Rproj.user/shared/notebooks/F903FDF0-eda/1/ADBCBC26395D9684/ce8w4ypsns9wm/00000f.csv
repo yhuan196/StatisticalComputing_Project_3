@@ -1,0 +1,3 @@
+"0","storms_nature_name = distinct(group_by(select(dt_long, Nature, ID), Nature))"
+"0","ggplot(data = storms_nature_name) + "
+"0","  geom_bar(aes(x = Nature))"
