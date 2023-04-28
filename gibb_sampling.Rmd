@@ -1,0 +1,477 @@
+---
+title: "project3-gibb sampling"
+author: "Zining Qi"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data=read_csv("./hurrican703.csv")%>%
+  janitor::clean_names() %>%
+  # reformat the time 
+  tidyr::separate(
+    time, c('Date', 'Time'), 
+    sep = ' ', extra = 'merge') %>% 
+  tidyr::separate(
+    Date, c('year_num', 'month_num', 'day'), 
+    sep = '-', extra = 'merge') %>% 
+  tidyr::separate(
+    Time, c('hour', 'min', 'sec'), 
+    sep =':', extra = 'merge')  %>%
+  mutate(
+    year_num=gsub('[^[:alnum:] ]',"",year_num),
+    sec=gsub('[^[:alnum:] ]',"",sec)
+  ) %>%
+  dplyr::select(id, nature, latitude, longitude, wind_kt, 
+         season, month, day, hour, min) %>%
+  # filter the time with 6 hours change
+  filter(
+  hour %in% c("00", "06", "12", "18"),
+         min == "00") %>%
+  group_by(id) %>% 
+  # changes 
+  mutate(latitude_d = latitude - lag(latitude, 1),
+         longitude_d = longitude - lag(longitude, 1),
+         wind_kt_d = lag(wind_kt, 1) - lag(wind_kt, 2),
+         wind_prev = lag(wind_kt, 1),
+         month = factor(month,levels = month.name)) %>% 
+  na.omit() %>% 
+  mutate(intercept = 1) 
+
+glmm.hurricane.1 = lme4::glmer(wind_kt ~ month+season+nature + (1+wind_prev+latitude_d+longitude_d+wind_kt_d|id),
+                       family = 'gaussian', data = data)
+summary(glmm.hurricane.1)
+
+data$index = 1:nrow(data)
+Xi = data %>% 
+  group_by(index) %>% 
+  dplyr::select(nature, season, month) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = month, values_from = n, values_fill = 0) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = nature, values_from = n, values_fill = 0) %>% 
+  ungroup() %>% 
+  mutate(reference = January*DS) %>% 
+  dplyr::select(reference, April, May, June, July, August, September, October, November, December, season, TS, ET, SS, NR) %>% 
+  as.matrix()
+
+dim(Xi)
+
+X = data %>% 
+  group_by(index) %>% 
+  dplyr::select(nature, season, month) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = month, values_from = n, values_fill = 0) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = nature, values_from = n, values_fill = 0) %>% 
+  ungroup() %>% 
+  mutate(reference = 1) %>% 
+  dplyr::select(reference, April, May, June, July, August, September, October, November, December, season, TS, ET, SS, NR) %>% 
+  as.matrix()
+
+dim(X)
+
+
+Z = data %>% 
+  dplyr::select(id, intercept, wind_prev, latitude_d, longitude_d, wind_kt_d) 
+
+Z
+
+Y = matrix(data$wind_kt, nrow=nrow(data))
+dim(Y)
+```
+
+
+
+```{r}
+
+betas
+beta_raw = as.matrix(betas)
+beta_raw[, 1:5]
+beta_start = matrix(as.numeric(betas),nrow=nrow(betas))
+dim(beta_start)
+gamma_start = c(38, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+beta_start = c()
+
+as.data.frame(t(beta_raw))
+dim(t(beta_raw))
+dim(Zi)
+test = Zi %*% t(beta_raw)
+```
+
+
+```{r}
+hurr = unique(data$id)
+
+Z1_raw = subset(Z, id == hurr[1]) %>% 
+  as.matrix()
+Z1 = matrix(as.numeric(Z1_raw[, 2:6]),nrow=nrow(Z1_raw))
+
+betas = as.data.frame(ranef(glmm.hurricane.1)$id) %>% 
+  t() %>% 
+  as.data.frame()
+beta_1 = betas %>% 
+  dplyr::select(hurr[1]) %>% 
+  as.matrix()
+
+Z2_raw = subset(Z, id == hurr[2]) %>% 
+  as.matrix()
+Z2 = matrix(as.numeric(Z2_raw[, 2:6]),nrow=nrow(Z2_raw))
+
+beta_2 = betas %>% 
+  dplyr::select(hurr[2]) %>% 
+  as.matrix()
+
+z1 = Z1 %*% beta_1
+z2 = Z2 %*% beta_2
+rbind(z1, z2)
+
+
+
+
+```
+
+
+```{r}
+Xi = data %>% 
+  group_by(index) %>% 
+  dplyr::select(nature, season, month,id) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = month, values_from = n, values_fill = 0) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = nature, values_from = n, values_fill = 0) %>% 
+  ungroup() %>% 
+  mutate(reference = January*DS) %>% 
+  dplyr::select(id,reference, April, May, June, July, August, September, October, November, December, season, TS, ET, SS, NR) %>% nest(.by=id) %>% pull()
+
+zi= data %>% 
+  dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id) %>% nest() %>% pull(data)
+
+zi[[1]]
+#Zi = data %>% 
+#dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id)
+#dim(Zi)
+
+yi=data%>%dplyr::select(wind_kt,id)  %>% nest() %>% pull(data)
+#yi=matrix(as.numeric(yi_raw[,2]),nrow=nrow(yi_raw))
+```
+
+
+
+
+
+```{r}
+# B for beta matrix
+B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
+  res = NULL
+  n = length(zdat)
+  # Beta_i function ~ N(,)
+  for (i in 1:n){
+    z = zdat[i]
+    y = ydat[i]
+    x=  xdat[i]
+    k = sigma_inv + sigma^(-2) * (t(z) %*% z)
+    m = sigma^(-2)*(t(y)%*%(z)-t(z)%*%x%*%gamma) + t(mu_est) %*% sigma_inv 
+    varcov = solve(k)
+    mu = varcov %*% t(m)
+    bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    res = rbind(res, bi)
+  }
+  
+  return(as.matrix(res))
+}
+
+63.61973  61.38674  32.76664
+```
+
+```{r}
+glmm.hurricane.1 = lme4::glmer(wind_kt ~ month+season+nature + (1+wind_prev+latitude_d+longitude_d+wind_kt_d|id),
+                       family = 'gaussian', data = data)
+summary(glmm.hurricane.1)
+
+
+
+new_data = data %>% 
+  dplyr::select(month, season, nature, wind_prev, latitude_d, longitude_d, wind_kt_d, id)
+predict(glmm.hurricane.1, new_data)
+```
+
+
+
+```{r}
+bdat = beta_df 
+bdat[1:5, 1] %>% 
+  matrix( nrow = 5)
+
+
+z1 = as.matrix(zi[[1]])
+y1 = as.matrix(yi[[1]])
+x1=  as.matrix(Xi[[1]])
+beta1 = bdat[1:5, 1] %>% 
+  matrix( nrow = 5)
+gamma = as.matrix(c(36.631075, 0.609573, -0.139560, -0.055835, 0.007938, 0.178128, 0.208701, 0.463327, 0.726293, 0.187005, -0.002587, 1.646888, 0.536647, 2.701619, 3.086692))
+
+resid1 <- y1 - z1 %*% beta1 - x1 %*% gamma 
+
+
+
+n_hurr = length(hurr)
+res = NULL
+gamma = as.matrix(c(36.631075, 0.609573, -0.139560, -0.055835, 0.007938, 0.178128, 0.208701, 0.463327, 0.726293, 0.187005, -0.002587, 1.646888, 0.536647, 2.701619, 3.086692))
+
+  for (i in 1:n_hurr){
+    z = as.matrix(zi[[2]])
+    y = as.matrix(yi[[2]])
+    x=  as.matrix(Xi[[2]])
+    beta = bdat[1:5, 2] %>% 
+      matrix(nrow = 5)
+    resid <- y - z %*% beta - x %*% gamma 
+    res = rbind(res, resid)
+    return(res)
+  }
+
+beta1 = bdat[1:5, 1] %>% 
+    matrix(nrow = 5)
+z1 = as.matrix(zi[[1]])
+y1 = matrix(Y[1:48, ], nrow = 48)
+Y[1:48,] - z1 %*% beta1 - X[1:48, ] %*% gamma_start
+
+
+compute_res = function(bdat, gamma) {
+  res = NULL
+  for (i in 1:n_hurr){
+    z = as.matrix(zi[[i]])
+    #y = as.matrix(yi[[i]])
+    #x=  as.matrix(Xi[[i]])
+    beta = bdat[1:5, i] %>% 
+      matrix(nrow = 5)
+    Z_mu <- z %*% beta  
+    res = rbind(res, Z_mu)
+  }
+  resid <- Y - res - X %*% gamma
+  return(resid)
+}
+
+compute_res(bdat, gamma_start)
+
+
+
+
+log_posterior_sigma <- function(bdat, gamma, sigma){
+  resid = compute_res(bdat, gamma)
+  n = length(resid)
+  return(-n*log(sigma) - 1/(2*sigma^2)*sum(resid^2) - log(1+(sigma/10)^2))
+}
+
+
+
+
+log_posterior_sigma(bdat, gamma_start, sigma_start)
+
+posterior_sigma <- function(bdat, gamma, sigma){
+  resid = compute_res(bdat, gamma)
+  n = length(resid)
+  return((sigma^(-n))/(1+(sigma/10)^2) * exp(1/(2*sigma^2)*sum(resid^2)))
+}
+
+posterior_sigma(bdat, gamma_start, sigma_start)
+
+# Define the proposal distribution for sigma
+sigma2_propose <- function(bdat, gamma, sigma_current, a){
+  sigma_next = sigma_current + (runif(1) - 0.5) * 2 * a
+  if(log(runif(1)) < log_posterior_sigma(bdat, gamma, sigma_next) - log_posterior_sigma(bdat, gamma, sigma_current))
+    return(sigma_next)
+  else
+    return(sigma_current)
+}
+
+
+sigma2_propose(bdat, gamma_start, sigma_start, a=2)
+
+sigma_MH <- function(bdat, gamma, sigma_start,niter, a) {
+  sigmavec <- rep(NA, niter)
+  sigmavec[1] <- sigma_start
+  for(i in 2:niter)
+    sigmavec[i] <- sigma2_propose(bdat, gamma_start, sigma_current = sigmavec[i-1], a=a)
+  return(sigmavec)
+}
+
+sigma_start = sqrt(27.5634)
+
+sigma_MH(bdat, gamma_start, sigma_start, niter = 1000, a=1)
+
+sigma_mh = sigma_MH(bdat, gamma_start, sigma_start, niter = 1000, a=0.5)
+
+
+sigma = function(bdat_start, gamma_start, sigma2_start, niter){
+  
+  compute_res = function(bdat, gamma) {
+  res = NULL
+  for (i in 1:n_hurr){
+    z = as.matrix(zi[[i]])
+    #y = as.matrix(yi[[i]])
+    #x=  as.matrix(Xi[[i]])
+    beta = bdat[1:5, i] %>% 
+      matrix(nrow = 5)
+    Z_mu <- z %*% beta  
+    res = rbind(res, Z_mu)
+  }
+  resid <- y - z %*% beta - x %*% gamma 
+  return(resid)
+  }
+  
+  
+  log_posterior_sigma <- function(sigma){
+    resid = compute_res(bdat = bdat_start, gamma = gamma_start)
+    n = length(resid)
+    return(-n*log(sigma) - 1/(2*sigma2)*sum(resid^2) - log(1+(sigma/10)^2))
+  }
+  
+  
+  sigma2_propose <- function(sigma_current, a){
+    sigma_next = sigma_current + (runif(1) - 0.5) * 2 * a
+    if(log(runif(1)) < log_posterior_sigma(sigma_next) - log_posterior_sigma(sigma_current))
+      return(sigma_next)
+    else
+      return(sigma_current)
+  }
+  
+  sigma_MH <- function(sigma_start,niter, a) {
+    sigmavec <- rep(NA, niter)
+    sigmavec[1] <- sigma_start
+    for(i in 2:niter)
+      sigmavec[i] <- sigma2_propose(res = res, sigma_current = sigmavec[i-1], a=a)
+    return(sigmavec)
+  }
+  
+  
+}
+
+plot(sigma_mh[1:1000],type="l",ylab="index")
+
+log_value = log_posterior_sigma(yi, zi, Xi, bdat, gamma_start, sigma_start, sigma_est)
+
+beta_glmm = ranef(glmm.hurricane.1)
+betas = as.data.frame(beta_glmm$id) 
+
+hurr = unique(data$id)
+
+betas = as.data.frame(ranef(glmm.hurricane.1)$id) %>% 
+  t() %>% 
+  as.data.frame() 
+  
+
+beta_df = betas %>% 
+  dplyr::select(hurr)
+  
+
+beta_data = beta_df %>% 
+  t() %>% 
+  as.data.frame()
+
+
+
+gamma_start = as.matrix(c(36.631075, 0.609573, -0.139560, -0.055835, 0.007938, 0.178128, 0.208701, 0.463327, 0.726293, 0.187005, -0.002587, 1.646888, 0.536647, 2.701619, 3.086692))
+
+Xi %*% gamma_start
+
+# Plot the posterior distribution of sigma^2 
+hist(sigma2_samples, breaks = 50, main = "Posterior distribution of sigma^2", xlab = "sigma^2", freq = FALSE)
+```
+
+```{r}
+# B for beta matrix
+B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
+  res = NULL
+  n = length(zdat)
+  # Beta_i function ~ N(,)
+  for (i in 1:n){
+    z = zdat[i]
+    y = ydat[i]
+    x=  xdat[i]
+    k = sigma_inv + sigma^(-2) * (t(z) %*% z)
+    m = sigma^(-2)*(t(y)%*%(z)-t(z)%*%x%*%gamma) + t(mu_est) %*% sigma_inv 
+    varcov = solve(k)
+    mu = varcov %*% t(m)
+    bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    res = rbind(res, bi)
+  }
+  
+  return(as.matrix(res))
+}
+
+
+
+
+    k = diag(2,5,5) + 2^(-2) * (t(Zi) %*% Zi)
+    m = sigma^(-2)*(t(y)%*%(z)-t(z)%*%x%*%gamma) + t(mu_est) %*% diag(2,5,5) 
+    
+    
+    varcov = solve(k)
+    mu = varcov %*% t(m)
+    bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    res = rbind(res, bi)
+
+```
+
+
+
+```{r}
+gibb <- function(y,niter=1000,mustart=0,sig2start=1) {
+  Bvec = list(B)
+  muvec = list(mu)
+  sigmasqvec = rep(NA, niter)
+  sigmasqvec[1] = sigmasq
+  SIGMAvec = list(SIGMA)
+  
+  for (k in 2:niter) {
+    pb1$tick()
+    Bvec[[k]] = Bfun(y, solve(SIGMAvec[[k - 1]]), 1/sigmasqvec[k - 1], muvec[[k - 1]]) 
+    muvec[[k]] = mufun(Bvec[[k]], SIGMAvec[[k - 1]])
+    sigmasqvec[k] = sigmasqfun(y, Bvec[[k]])
+    SIGMAvec[[k]] = SIGMAfun(Bvec[[k]], muvec[[k]])
+  }
+  
+  return(list(B = Bvec, mu = muvec, sigmasq = sigmasqvec, SIGMA = SIGMAvec))
+}
+```
+
+
+```{r}
+acf(cur_B[2])
+ts.plot(cur_B[1], xlab = "iteration", ylab = expression(beta[0]))
+hist(unlist(cur_mu[1]), main = "", breaks = 30, xlab = expression(mu[0]))
+```
+
+
+
+```{r}
+# Create two matrices
+A <- matrix(c(1, 2, 3, 4), nrow = 2)
+B <- matrix(c(5, 6, 7, 8), nrow = 2)
+
+# Create an empty matrix to store the result
+result <- NULL
+
+# Loop through the matrices and bind them together row-wise
+for (i in 1:nrow(A)) {
+  row <- rbind(A[i, ], B[i, ])
+  result <- rbind(result, row)
+}
+
+# View the result
+result
+
+```
+
+
+
+
+
+
+
+
