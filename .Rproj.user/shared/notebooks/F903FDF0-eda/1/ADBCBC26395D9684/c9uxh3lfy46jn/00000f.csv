@@ -1,2 +1,0 @@
-"0","ggplot(data=dt, aes(x = Longitude, y = Latitude)) + "
-"0","  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE)"

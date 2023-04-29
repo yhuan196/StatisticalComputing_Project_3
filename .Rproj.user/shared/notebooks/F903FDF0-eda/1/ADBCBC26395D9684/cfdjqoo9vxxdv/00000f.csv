@@ -1,4 +1,0 @@
-"0","mapMonth <- map + facet_wrap(~ Month) +"
-"0","  ggtitle(paste(""Atlantic named Windstorm Trajectories by Month ("", "
-"0","                 seasonrange, "")\n"")) "
-"0","mapMonth"

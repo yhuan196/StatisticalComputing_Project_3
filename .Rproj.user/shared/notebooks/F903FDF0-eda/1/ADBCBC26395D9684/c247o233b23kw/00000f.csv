@@ -1,4 +1,0 @@
-"0","storms_season_name = distinct(group_by(select(dt_long, Season, ID), Season))"
-"0","ggplot(data = storms_season_name) + "
-"0","  geom_bar(aes(x = Season)) +"
-"0","  scale_x_continuous(""Year"")"
