@@ -5,10 +5,8 @@ date: "2023-04-26"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 
-```{r}
 library(tidyr)
 library(tidyverse)
 library(lubridate)
@@ -19,8 +17,9 @@ library(doParallel)
 library(pracma)
 library(gsubfn)
 library(matrixsampling)
-numCores = detectCores()
-registerDoParallel(numCores) 
+library(lme4)
+# numCores = detectCores()
+# registerDoParallel(numCores) 
 ```
 
 # clean data
@@ -72,14 +71,14 @@ Xi = data %>%
   mutate(reference = 1) %>% 
   dplyr::select(id,reference, April, May, June, July, August, September, October, November, December, season, TS, ET, SS, NR) %>% nest(.by=id) %>% pull()
 
-dim(Xi)
+# dim(Xi)
 
 Zi_raw = data %>% 
   dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id) %>% nest() %>%pull(data)
 
 Zi = data %>% 
   dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id)
-dim(Zi)
+# dim(Zi)
 
 yi_raw=data%>%dplyr::select(wind_kt,id)  %>% nest() %>% pull(data)
 #yi=matrix(as.numeric(yi_raw[,2]),nrow=nrow(yi_raw))
@@ -88,16 +87,16 @@ yi_raw=data%>%dplyr::select(wind_kt,id)  %>% nest() %>% pull(data)
 
 # glmm
 ```{r}
-glmm.hurricane = lme4::glmer(wind_kt ~ month+season+nature + (1+wind_change+latitude_d+longitude_d+wind_kt_d|id),
-                       family = 'gaussian', data = hurr_dat_rm)
-summary(glmm.hurricane)
+# glmm.hurricane = glmer(wind_kt ~ month+season+nature + (1+wind_change+latitude_d+longitude_d+wind_kt_d|id),
+#                        family = "gaussian", data = hurr_dat_rm)
+# summary(glmm.hurricane)
 ```
 
 # B matrix
 ```{r}
 gamma <- c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
 gamma <- as.matrix(gamma)
-dim(gamma)
+# dim(gamma)
 
 # B for beta matrix
 B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
@@ -109,78 +108,74 @@ B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
     y = ydat[[i]]
     x=  xdat[[i]]
     k = sigma_inv + sigma^(-2) * as.matrix(t(z)) %*% as.matrix(z)
-    m = sigma^(-2)*(as.matrix(t(z))%*%as.matrix(y))-as.matrix(t(z))%*%as.matrix(x)%*%gamma+sigma_inv%*%as.matrix(mu_est)
+    m = sigma^(-2)*(as.matrix(t(z))%*%as.matrix(y)-as.matrix(t(z))%*%as.matrix(x)%*%gamma)+sigma_inv%*%as.matrix(mu_est)
     varcov = solve(k)
     mu = t(m)%*%varcov
     bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    
     res = rbind(res, bi)
   }
-  
-  return(as.matrix(res))
+  res=as.matrix(t(res))
+  return(res)
 }
 
 testB <- B(Zi_raw,yi_raw,Xi, mu_est = rep(0,5), sigma= 2,sigma_inv=diag(2,5,5) ,gamma)
 
-testB <- data.frame(t(testB))
 ```
 
 #### draft 1
 
 ```{r}
-gamma <- c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
-gamma <- as.matrix(gamma)
-dim(gamma)
-
-lxi <- Xi[[1]]
-lzi <- Zi_raw[[1]]
-lyi <- yi_raw[[1]]
-
-lk <- function(sigma_inv, sigma, z){
-  sigma_inv + sigma^(-2) * (as.matrix(t(z)) %*% as.matrix(z))
-  }
-
-nn <- lk(diag(2,5,5), 2, lzi)
-dim(nn)
-
-lm <- function(sigma_inv,sigma, y, z, x, gamma, mu_est) {
-  sigma^(-2)*(as.matrix(t(z))%*%as.matrix(y))-as.matrix(t(z))%*%as.matrix(x)%*%gamma+sigma_inv%*%as.matrix(mu_est)
-}
-
-lm(diag(2,5,5),2,lyi,lzi,lxi,gamma,rep(0,5))  
-
-2^(-2)*(as.matrix(t(lzi))%*%as.matrix(lyi))-as.matrix(t(lzi))%*%as.matrix(lxi)%*%gamma+diag(2,5,5)%*%as.matrix(rep(0,5))
-
-dim(2^(-2)*(as.matrix(t(lzi))%*%as.matrix(lyi)))
-dim(as.matrix(t(lzi))%*%as.matrix(lxi)%*%gamma+diag(2,5,5)%*%as.matrix(rep(0,5)))
-
-
-
-is.matrix(nn)
-
-
-```
+# gamma <- c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+# gamma <- as.matrix(gamma)
+# dim(gamma)
+# 
+# lxi <- Xi[[1]]
+# lzi <- Zi_raw[[1]]
+# lyi <- yi_raw[[1]]
+# 
+# lk <- function(sigma_inv, sigma, z){
+#   sigma_inv + sigma^(-2) * (as.matrix(t(z)) %*% as.matrix(z))
+#   }
+# 
+# nn <- lk(diag(2,5,5), 2, lzi)
+# dim(nn)
+# 
+# lm <- function(sigma_inv,sigma, y, z, x, gamma, mu_est) {
+#   sigma^(-2)*(as.matrix(t(z))%*%as.matrix(y))-as.matrix(t(z))%*%as.matrix(x)%*%gamma+sigma_inv%*%as.matrix(mu_est)
+# }
+# 
+# lm(diag(2,5,5),2,lyi,lzi,lxi,gamma,rep(0,5))  
+# 
+# 2^(-2)*(as.matrix(t(lzi))%*%as.matrix(lyi))-as.matrix(t(lzi))%*%as.matrix(lxi)%*%gamma+diag(2,5,5)%*%as.matrix(rep(0,5))
+# 
+# dim(2^(-2)*(as.matrix(t(lzi))%*%as.matrix(lyi)))
+# dim(as.matrix(t(lzi))%*%as.matrix(lxi)%*%gamma+diag(2,5,5)%*%as.matrix(rep(0,5)))
+# 
+# 
+# 
+# is.matrix(nn)
 
 
-```{r}
-#test B
-v=5
-S=0.8*diag(5)
-m=rinvwishart(1,nu=v,Omega=S)
-
- 
-k=diag(2,5,5)
-k+z1
-
-
-gamma <- c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
-gamma <- as.vector(c)
-
-z=t(Zi)%*%Zi
-z1=2*z
-z1
-m+z1
-
-testB = B(Zi_raw,yi_raw,Xi, mu_est = rep(0,5), sigma= 2,sigma_inv=diag(2,5,5) ,gamma=c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
+# #test B
+# v=5
+# S=0.8*diag(5)
+# m=rinvwishart(1,nu=v,Omega=S)
+# 
+#  
+# k=diag(2,5,5)
+# k+z1
+# 
+# 
+# gamma <- c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+# gamma <- as.vector(c)
+# 
+# z=t(Zi)%*%Zi
+# z1=2*z
+# z1
+# m+z1
+# 
+# testB = B(Zi_raw,yi_raw,Xi, mu_est = rep(0,5), sigma= 2,sigma_inv=diag(2,5,5) ,gamma=c(38,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
 ```
 
@@ -191,14 +186,20 @@ testB = B(Zi_raw,yi_raw,Xi, mu_est = rep(0,5), sigma= 2,sigma_inv=diag(2,5,5) ,g
 ```{r}
 ## Mu
 mu_est = function(B, sigma_inv,v){
+  res= matrix(c(0,0,0),5,1)
   N = ncol(B)
   v_inv=solve(v)
-  me= solve(N*sigma_inv+v_inv)
-  M = colSums(t(B))%*%sigma_inv
-  mean_vec=me%*%t(M)
-  mu = mvrnorm(1,mu = me%*%t(M), Sigma = me)
-  return(mu)
-}
+  me= solve(N*sigma_inv-v_inv)
+  for (i in 1:N){
+  beta_i = as.matrix(B[,i])
+  M = sigma_inv%*%beta_i
+  mean_vec=me%*%M
+  mu = mvrnorm(1,mu = me%*%M, Sigma = me)
+  res=res+as.matrix(mu)
+
+  } 
+  return(res)
+  }
 testmu=mu_est(as.matrix(testB),diag(2,5,5),diag(5,5,5))
 testmu=as.matrix(testmu)
 
@@ -208,75 +209,91 @@ testmu_df <- data.frame(testmu)
 ## draft 2
 
 ```{r}
-N <- ncol(testB)
-v <- diag(5,5,5)
-sigma_inv <- diag(2,5,5)
-B <- as.matrix(testB)
-dim(B)
-v_inv <- solve(v)
-me <- solve(N*sigma_inv+v_inv)
-dim(me)
-
-M <- sigma_inv*colSums(t(B))
-dim(M)
-mean_vec=me%*%t(M)
-
+# N <- ncol(testB)
+# v <- diag(5,5,5)
+# sigma_inv <- diag(2,5,5)
+# B <- as.matrix(testB)
+# dim(B)
+# v_inv <- solve(v)
+# me <- solve(N*sigma_inv+v_inv)
+# dim(me)
+# 
+# M <- sigma_inv*colSums(t(B))
+# dim(M)
+# mean_vec=me%*%t(M)
 ```
 
 # A
 ```{r}
 ##sigma_inv
-
 sigma_inv=function(B, mu_est) {
+  res= matrix(0,nrow=5,ncol=5)
   N = ncol(B) # N is number of hurricane
   S.matrix = diag(5,5,5)
+  v=N+5+1
   for (i in 1:N){
         beta_i = as.matrix(B[,i])
-        S.matrix = S.matrix + (beta_i-mu_est) %*% t(beta_i-mu_est)
+        ai=(beta_i-mu_est) %*% t(beta_i-mu_est)
+        res= res + as.matrix(ai)
   }
-  v=N+5+1
-sigma= rinvwishart(1, nu = v, Omega = S.matrix, checkSymmetry = F)
+sigma= rinvwishart(1, nu = v, Omega = S.matrix+res, checkSymmetry = F)
 return(sigma[,,1])
 }
+
 testsigmainv=sigma_inv(as.matrix(testB),testmu)
 
-testsigmainv_df <- data.frame(testsigmainv)
+#testsigmainv_df <- data.frame(testsigmainv)
 ```
 
 ```{r}
-# draft 3
-B=as.matrix(testB)
-N = ncol(B)
-S.matrix=diag(5,5,5)
-beta_1=as.matrix(B[,1])
-beta_1
+# # draft 3
+# B=as.matrix(testB)
+# N = ncol(B)
+# S.matrix=diag(5,5,5)
+# beta_1=as.matrix(B[,1])
+# beta_1
 ```
 
 
 # gamma ******
 ```{r}
 ## gamma 
-gamma=function(B,zdat, ydat,xdat, sigma) {
+gamma = function(B,zdat, ydat,xdat, sigma) {
+  res= matrix(c(0,0,0),15,1)
   n = length(zdat)
   for (i in 1:n){
     z = as.matrix(zdat[[i]])
     y = as.matrix(ydat[[i]])
     x=  as.matrix(xdat[[i]])
-  a = sigma^(-2) * (t(x) %*% x) + 400*diag(15)
-  b = solve(a)
-  c = sigma^(-2)*as.matrix((colSums(t(y)%*%x))-as.matrix(colSums(t(x)%*%z%*%as.matrix(B[,i])))) 
-  gamma_est = mvrnorm(1,mu=t(c)%*%b,Sigma = b)
+    ai = sigma^(-2)*as.matrix(t(x))%*% as.matrix(x) + 400*diag(15)
+    mi = solve(ai)
+    ni = sigma^(-2)*(as.matrix(t(x)%*%y)-as.matrix(t(x)%*%z%*%as.matrix(B[,i]))) 
+    gamma_est = mvrnorm(1,mu=mi%*%ni,Sigma = mi)
+    res = res+as.matrix(gamma_est)
    }
-  
-
- return(gamma_est)
+ return(res)
 }
 testgamma=gamma(testB,Zi_raw,yi_raw,Xi,2)
-testgamma=as.matrix(testgamma)
+
 
 testgamma_df <- data.frame(testgamma)
 ```
 
+```{r}
+# #draft for gamma
+# x=as.matrix(Xi[[1]])
+# n=length(Zi_raw)
+# 
+# a = 2^(-2) * (t(x) %*% x) + 400*diag(15)*n
+# dim(a)
+# b=solve(a)
+# y=as.matrix(yi_raw[[1]])
+# c = 2^(-2)*(as.matrix((colSums(t(y)%*%x))))
+# dim(c)
+# z=as.matrix(Zi_raw[[1]])
+# d=2^(-2)*as.matrix(colSums(t(x)%*%z%*%as.matrix(testB[,1]))) 
+# dim(d)
+```
 
 
 ```{r}

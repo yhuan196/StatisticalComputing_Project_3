@@ -1,0 +1,37 @@
+---
+title: "gibbbs"
+author: "Yi Huang"
+date: "2023-04-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+gibb <- function(niter=100,zdat,ydat,xdat, B_start,mustart,sigma_start, sigmainv_start, gamma_start, v) {
+  Bvec = list(B_start)
+  muvec = list(mustart)
+  sigmasqvec = rep(NA, niter)
+  sigmasqvec[1] = sigma_start
+  SIGMAvec = list(sigmainv_start)
+  gammavec = list(gamma_start)
+  
+  for (k in 2:niter) {
+    Bvec[[k]] = B(zdat=zdat,ydat=ydat,xdat=xdat, mu_est = muvec[[k-1]], sigma=sigmasqvec[k-1],sigma_inv=SIGMAvec[[k-1]] ,gamma = gammavec[[k-1]])
+    muvec[[k]] = mu_est(Bvec[[k]], SIGMAvec[[k-1]],v)
+    sigmasqvec[k] = 5
+    SIGMAvec[[k]] = sigma_inv(Bvec[[k]], muvec[[k]])
+    gammavec[[k]] = gamma(Bvec[[k]],zdat, ydat,xdat, sigmasqvec[[k]])
+  }
+  
+  return(list(B = Bvec, mu = muvec, sigmasq = sigmasqvec, SIGMA = SIGMAvec, gamma = gammavec))
+}
+```
+
+```{r}
+gamma_start = as.matrix(c(36.631075, 0.609573, -0.139560, -0.055835, 0.007938, 0.178128, 0.208701, 0.463327, 0.726293, 0.187005, -0.002587, 1.646888, 0.536647, 2.701619, 3.086692))
+result_test = gibb(niter = 5, Zi_raw,yi_raw,Xi, testB, rep(0,5), 5, diag(2,5,5), gamma_start, diag(5,5,5))
+```
+
