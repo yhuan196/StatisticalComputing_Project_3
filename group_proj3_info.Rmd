@@ -101,7 +101,7 @@ where
 $Y_{i}(t)$ the wind speed at time $t$ (i.e. 6 hours earlier),
 
 $\Delta_{i,1}(t)$, $\Delta_{i,2}(t)$ and $\Delta_{i,3}(t)$ are the
-changes of latitude, longitude and wind speed between $t$ and $t+6$,
+changes of latitude, longitude and wind speed between $t$ and $t-6$,
 
 $\mathbf{X}_i = (x_{i,1},x_{i,2},x_{i,3})$ are covariates with fixed
 effect $\gamma$, where $x_{i,1}$ be the month of year when the $i$-th
