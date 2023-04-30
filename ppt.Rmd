@@ -1,0 +1,98 @@
+---
+title: |
+  | P8160 - Project 3
+  | Baysian modeling of hurricane
+author: |
+  | Jingchen Chai, Yi Huang, Zining Qi
+  | Ziyi Wang, Ruihan Zhang
+date: "2023-05-01"
+output:
+  beamer_presentation:
+    theme: "Boadilla"
+    fonttheme: "structurebold"
+    incremental: false
+    latex_engine: xelatex
+header-includes:
+- \usepackage{caption}
+- \captionsetup[figure]{labelformat=empty}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+library(base)
+library(caret)
+library(corrplot)
+library(plotmo)
+library(ggplot2)
+library(kableExtra)
+```
+
+# Introduction
+* Hurricanes cause fatalities and property damage
+* there is a growing need to accurately predict hurricane behavior, including location and speed
+* This project aims to forecast wind speeds by modeling hurricane trajectories using a Hierarchical Bayesian Model. 
+
+# Dataset
+
+* Hurrican703 dataset: 22038 observations $\times$ 8 variables 
+  + 702 hurricanes in the North Atlantic area since 1950
+  
+# EDA - Count of Hurricanes in Each Month
+
+```{r, include = FALSE}
+dt= read.csv("./data/hurrican703.csv")
+library(data.table)
+dt <- as.data.table(dt)
+summary(dt)
+
+library(tidyverse)
+dt_long <- dt %>%
+    dplyr::group_by(ID) %>% 
+    mutate(Wind_prev = lag(Wind.kt, 1),
+           Lat_change = Latitude - lag(Latitude, 1),
+           Long_change = Longitude - lag(Longitude, 1),
+           Wind_prev_prev = lag(Wind.kt, 2)) %>% 
+    mutate(Wind_change = Wind_prev - Wind_prev_prev)
+```
+
+
+```{r, echo=FALSE,fig.height=4, fig.width=7}
+storms_month_name = distinct(group_by(select(dt_long, Month, ID), Month))
+
+storms_month_name %>% 
+  dplyr::group_by(Month) %>% 
+  mutate(Month =  factor(Month, levels = month.name)) %>%  
+  ggplot(aes(x = Month)) +
+  geom_bar()
+```
+
+# EDA - Count of Hurricanes in Each Year
+
+```{r, echo=FALSE,fig.height=4, fig.width=7}
+storms_season_name = distinct(group_by(select(dt_long, Season, ID), Season))
+ggplot(data = storms_season_name) + 
+  geom_bar(aes(x = Season)) +
+  scale_x_continuous("Year")
+```
+
+# EDA - Count of Hurricanes in Each Nature
+
+```{r, echo=FALSE,fig.height=4, fig.width=7}
+storms_nature_name = distinct(group_by(select(dt_long, Nature, ID), Nature))
+ggplot(data = storms_nature_name) + 
+  geom_bar(aes(x = Nature))
+```
+
+# EDA - Average Speed (knot) of Hurricanes in Each Year
+
+```{r, echo=FALSE,fig.height=4, fig.width=7}
+dt_long %>% 
+  dplyr::group_by(Season) %>% 
+  mutate(avg_speed = mean(Wind.kt)) %>% 
+  distinct(Season, avg_speed) %>% 
+  ggplot(aes(x = Season, y = avg_speed)) +
+  geom_point() +
+  geom_smooth(method = "loess") +
+  scale_y_continuous("Average Speed (knot)") +
+  scale_x_continuous("Year") 
+```
