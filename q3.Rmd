@@ -1,0 +1,19 @@
+---
+title: "q3"
+author: "Ziyi Wang"
+date: "2023-04-30"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### 3. Compute posterior summaries and 95% credible intervals of $\gamma$, the fixed effects associated with the covariates in the model. Using the estimated Bayesian model, answer the following questions: (1) are there seasonal differences in hurricane wind speeds, and (2) is there evidence to support the claim that hurricane wind speeds have been increasing over the years?
+
+## Compute posterior summaries  
+## Compute 95% credible intervals of $\gamma$, the fixed effects associated with the covariates in the model.
+
+## (1) are there seasonal differences in hurricane wind speeds
+
+## (2) is there evidence to support the claim that hurricane wind speeds have been increasing over the years
