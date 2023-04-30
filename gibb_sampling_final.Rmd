@@ -1,0 +1,290 @@
+---
+title: "gibb_sampling"
+author: "Zining Qi"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r B.post}
+B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
+  res = NULL
+  n = length(zdat)
+  # Beta_i function ~ N(,)
+  for (i in 1:n){
+    z = zdat[[i]]
+    y = ydat[[i]]
+    x=  xdat[[i]]
+    k = sigma^(-2) * as.matrix(t(z)) %*% as.matrix(z) + solve(sigma_inv) 
+    m = (sigma^(-2)*as.matrix(t(z))%*%as.matrix(y))-(sigma^(-2)*as.matrix(t(z))%*%as.matrix(x)%*%gamma)+solve(sigma_inv)%*%as.matrix(mu_est)
+    varcov = solve(k)
+    mu = varcov%*%m
+    bi = mvrnorm(1, mu = mu, Sigma = varcov)
+    
+    res = rbind(res, bi)
+  }
+  res=as.matrix(t(res))
+  return(res)
+}
+
+testB <- B(Zi_sort,Yi_sort,Xi_sort, as.matrix(c(-10,2,3,4,5)), 5, diag(c(1,1,1,1,1)), gamma_start)
+```
+
+```{r mu.post}
+mu_est = function(B, sigma_inv){
+  res= matrix(0, nrow=5, ncol=1)
+  N = ncol(B)
+  v = diag(0.8, 5)
+  v[lower.tri(v)] = 0.1
+  v[upper.tri(v)] = 0.1
+  v_inv=solve(v)
+  me= solve(N*solve(sigma_inv)-v_inv)
+  for (i in 1:N){
+    beta_i = as.matrix(B[,i])
+    M = solve(sigma_inv) %*% beta_i
+    res=res+M
+  } 
+  mean_vec = me %*% res
+  mu = mvrnorm(1, mu = mean_vec, Sigma = me)
+  return(as.matrix(mu))
+}
+testmu=mu_est(as.matrix(testB),diag(2,5,5))
+```
+
+```{r Sigma.post}
+sigma_inv=function(B, mu_est) {
+  res= matrix(0,nrow=5,ncol=5)
+  N = ncol(B) # N is number of hurricane
+  S.matrix = diag(0.7,5)
+  S.matrix[lower.tri(S.matrix)] = 0.2
+  S.matrix[upper.tri(S.matrix)] = 0.2
+  v=N+5+1
+  for (i in 1:N){
+    beta_i = as.matrix(B[,i])
+    ai=(beta_i-mu_est) %*% t(beta_i-mu_est)
+    res= res + as.matrix(ai)
+  }
+  sigma= rinvwishart(1, nu = v, Omega = S.matrix+res, checkSymmetry = T)
+  return(sigma[,,1])
+}
+
+testsigmainv=sigma_inv(as.matrix(testB),testmu)
+```
+
+
+```{r gamma.post}
+gamma = function(B,zdat, ydat,xdat, sigma) {
+
+  n = length(zdat)
+  a = diag(0, 15)
+  N = matrix(0,nrow=15,ncol=1)
+  for (i in 1:n){
+    z = as.matrix(zdat[[i]])
+    y = as.matrix(ydat[[i]])
+    x=  as.matrix(xdat[[i]])
+    ai = sigma^(-2)*as.matrix(t(x))%*% as.matrix(x) 
+    a = a + ai
+    # mi = solve(ai)
+    ni = sigma^(-2)*(t(x)%*%y - t(x)%*%z%*%as.matrix(B[,i]))
+    N = N + ni
+  }
+  M = a + 400*diag(15)
+  gamma_est = mvrnorm(1, mu = solve(M)%*%N, Sigma = solve(M))
+  return(gamma_est)
+}
+testgamma=gamma(testB,Zi_sort,Yi_sort,Xi_sort,5)
+```
+
+```{r sigma.mh}
+compute_res = function(zdat, xdat, ydat, beta, gamma) {
+  res = NULL
+  for (i in 1:length(hurr_sort)){
+    z = as.matrix(Z_sort[[i]])
+      #y = as.matrix(yi[[i]])
+      #x=  as.matrix(Xi[[i]])
+    betai = beta[ ,i] %>% matrix(nrow = 5)
+    Z_mu <- z %*% betai  
+    res = rbind(res, Z_mu)
+  }
+  resid = ydat - res - xdat %*% gamma
+  return(resid)
+}
+
+#Y_mtx = data_sort$wind_kt
+
+# compute_res(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start)
+
+
+log_posterior_sigma <- function(zdat, xdat, ydat, beta, gamma, sigma){
+  resid = compute_res(zdat, xdat, ydat, beta, gamma)
+  n = length(resid)
+  return(-n*log(sigma) - 1/(2*sigma^2)*sum(resid^2) - log(1+(sigma/10)^2))
+}
+
+#log_posterior_sigma(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start, 5)
+
+sigma_propose <- function(zdat, xdat, ydat, beta, gamma, sigma_current, a){
+    sigma_next = sigma_current + (runif(1) - 0.5) * 2 * a
+    if(log(runif(1)) < log_posterior_sigma(zdat, xdat, ydat, beta, gamma, sigma_next) - log_posterior_sigma(zdat, xdat, ydat, beta, gamma, sigma_current))
+      return(sigma_next)
+    else
+      return(sigma_current)
+}
+  
+# sigma_propose(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start, 5, 1)
+
+sigma_MH <- function(zdat, xdat, ydat, beta, gamma, sigma_start, a, niter) {
+    sigmavec <- rep(NA, niter)
+    sigmavec[1] <- sigma_start
+    for(i in 2:niter)
+      sigmavec[i] <- sigma_propose(zdat, xdat, ydat, beta, gamma, sigmavec[i-1], a)
+    return(sigmavec)
+}
+
+mh_sim = sigma_MH(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start, 5, 0.5, 200)
+#df.sigma = data_frame(mh_sim)
+#write.csv(df.sigma, './sigma_md_df.csv')
+plot(mh_sim[1:300],type="l",ylab="index")
+
+#mh_sim2 = sigma_MH(Z_sort, X_mtx, Y_mtx, B_sort, gamma_start, 5, 2, 1000)
+#df.sigma2 = data_frame(mh_sim2)
+#write.csv(df.sigma2, './sigma_md_df2.csv')
+#plot(mh_sim2[1:1000],type="l",ylab="index")
+
+
+
+
+
+
+sigma = function(zdat, xdat, ydat, beta, gamma, sigma_start, a, niter){
+  mh_res = sigma_MH(zdat, xdat, ydat, beta, gamma, sigma_start, a, niter) 
+  sigma_res = mean(mh_res[(niter-50):niter])
+  return(sigma_res)
+}
+
+sigmatest = sigma(Z_sort, X_mtx, Y_mtx, B_sort, gamma_start, 5, 0.5, 200)
+```
+
+# Data processing
+```{r}
+data=read_csv("./hurrican703.csv")%>%
+  janitor::clean_names() %>%
+  # reformat the time 
+  tidyr::separate(
+    time, c('Date', 'Time'), 
+    sep = ' ', extra = 'merge') %>% 
+  tidyr::separate(
+    Date, c('year_num', 'month_num', 'day'), 
+    sep = '-', extra = 'merge') %>% 
+  tidyr::separate(
+    Time, c('hour', 'min', 'sec'), 
+    sep =':', extra = 'merge')  %>%
+  mutate(
+    year_num=gsub('[^[:alnum:] ]',"",year_num),
+    sec=gsub('[^[:alnum:] ]',"",sec)
+  ) %>%
+  dplyr::select(id, nature, latitude, longitude, wind_kt, 
+         season, month, day, hour, min) %>%
+  # filter the time with 6 hours change
+  filter(
+  hour %in% c("00", "06", "12", "18"),
+         min == "00") %>%
+  group_by(id) %>% 
+  # changes 
+  mutate(latitude_d = latitude - lag(latitude, 1),
+         longitude_d = longitude - lag(longitude, 1),
+         wind_kt_d = lag(wind_kt, 1) - lag(wind_kt, 2),
+         wind_prev = lag(wind_kt, 1),
+         month = factor(month,levels = month.name)) %>% 
+  na.omit() %>% 
+  mutate(intercept = 1) 
+
+data_sort = data[order(data$id), ]
+data_sort$index = 1:nrow(data_sort)
+
+X_sort = data_sort %>% 
+  group_by(index) %>% 
+  dplyr::select(nature, season, month, id) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = month, values_from = n, values_fill = 0) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = nature, values_from = n, values_fill = 0) %>% 
+  ungroup() %>% 
+  mutate(intercept2 = 1) %>% 
+  dplyr::select(intercept2, April, May, June, July, August, September, October, November, December, season, TS, ET, SS, NR) 
+  # %>% nest(.by=id) %>% pull()
+
+Xi_sort = data_sort %>% 
+  group_by(index) %>% 
+  dplyr::select(nature, season, month, id) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = month, values_from = n, values_fill = 0) %>% 
+  mutate(n = 1) %>% 
+  pivot_wider(names_from = nature, values_from = n, values_fill = 0) %>% 
+  ungroup() %>% 
+  mutate(intercept2 = 1) %>% 
+  dplyr::select(intercept2, April, May, June, July, August, September, October, November, December, season, TS, ET, SS, NR, id) %>%
+  nest(.by=id) %>% pull()
+
+X_mtx = as.matrix(X_sort)
+
+Y_sort = data_sort%>%dplyr::select(wind_kt)  
+  # %>% nest() %>% pull(data)
+
+Yi_sort = data_sort%>%dplyr::select(wind_kt, id) %>% nest() %>% pull(data)
+
+Y_mtx = matrix(data_sort$wind_kt, nrow = nrow(data_sort))
+
+Zi_sort = data_sort %>% 
+  dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id) %>% nest() %>% pull(data)
+
+B_sort = beta_raw %>% t()
+```
+
+# Gibb sampling
+```{r}
+gibb <- function(niter,zdat, ydat,xdat, B_start,mustart,sigma_start, sigmainv_start, gamma_start) {
+  Bvec = list(B_start)
+  muvec = list(mustart)
+  sigmasqvec = rep(NA, niter)
+  sigmasqvec[1] = sigma_start
+  SIGMAvec = list(sigmainv_start)
+  gammavec = list(gamma_start)
+  
+  for (k in 2:niter) {
+    Bvec[[k]] = B(zdat=zdat,ydat=ydat,xdat=xdat, mu_est = muvec[[k-1]], sigma=sigmasqvec[k-1],sigma_inv=SIGMAvec[[k-1]] ,gamma = gammavec[[k-1]])
+    muvec[[k]] = mu_est(Bvec[[k]], SIGMAvec[[k-1]])
+    sigmasqvec[k] = sigma(Z_sort, X_mtx, Y_mtx, Bvec[[k]], gammavec[[k-1]], SIGMAvec[[k-1]], 0.5, 200)
+    SIGMAvec[[k]] = sigma_inv(Bvec[[k]], muvec[[k]])
+    gammavec[[k]] = gamma(Bvec[[k]],zdat, ydat,xdat, sigmasqvec[[k]])
+  }
+  
+  return(list(B = Bvec, mu = muvec, sigmasq = sigmasqvec, SIGMA = SIGMAvec, gamma = gammavec))
+}
+```
+
+```{r}
+mh_res1 = gibb(10000, Zi_sort,Yi_sort,Xi_sort, B_sort, as.matrix(c(-10,2,3,4,5)), 5, diag(c(1,1,1,1,1)), gamma_start)
+```
+
+```{r}
+saveRDS(test, file = "./test_gibb.rds")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
