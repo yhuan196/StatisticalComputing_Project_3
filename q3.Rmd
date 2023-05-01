@@ -120,10 +120,8 @@ quantile(df_gama2$A_J, probs = c(0.025, 0.975))
 # include 0, meaning...no diff betw. Aug & July
 ```
 
+## summer month
 ```{r}
-df_summer =  df_gama2 %>% summarise(summer = sum(June, July, August))
-head(df_summer)
-
 df_summer =  df_gama2 %>% select(June, July, August)
 df_nosummer =  df_gama2 %>% select(April, May, September,
                                    October, November, December)
@@ -133,6 +131,21 @@ nosummer_wd = rowSums(df_nosummer)/6
 
 head(summer_wd - nosummer_wd)
 quantile(summer_wd - nosummer_wd, probs = c(0.025, 0.975))
+```
+
+## summer season: 7,8,9,10
+```{r}
+df_summer =  df_gama2 %>% select(July, August, September, October)
+df_nosummer =  df_gama2 %>% select(April, May, June, November, December)
+     
+head(df_summer)
+
+summer_wd = rowSums(df_summer)/4
+nosummer_wd = rowSums(df_nosummer)/5
+
+head(summer_wd - nosummer_wd)
+quantile(summer_wd - nosummer_wd, probs = c(0.025, 0.975))
+
 ```
 
 
@@ -147,13 +160,3 @@ quantile(df_year$year, probs = c(0.025, 0.975))
 ```
 
 The gamma associated with type (Nature of the hurricane) is smaller than 0, fail to reject H1. No evidence to support the claim that hurricane wind speeds have been increasing over the years.
-
-```{=tex}
-\begin{table}[]
-\begin{tabular}{|c|c|}
-\hline
-2.5\%        & 97.5\%       \\ \hline
--0.003099822 & -0.001501638 \\ \hline
-\end{tabular}
-\end{table}
-```
