@@ -230,9 +230,9 @@ Generate $B_t$ from $f(B_t, \sigma_{t-1},\mu_{t-1},\Sigma_{t-1}^{-1})$
 $$
 \scriptsize{
 \begin{aligned}
-f(B^\top|\sigma^2,\mu,\Sigma) &\propto \prod_{i=1}^n\exp \{-\frac{(Y_j-Z_j\beta_j-X_j\gamma)^\top(Y_jZ_j\beta_j-X_j\gamma)}{2\sigma^2}-\frac{(\beta_j-\mu)^\top\Sigma^{-1}(\beta_j-\mu)}{2}\}\\
-&\propto \prod_{i=1}^n\exp(-\frac{1}{2}(\beta_j^\top(\frac{Z_j^\top Z_j}{\sigma^2}+\Sigma^{-1})\beta_j-2(\frac{Y_j^\top Z_j-X_j^\top Z_j\gamma}{\sigma^2}+\mu^\top \Sigma^{-1})\beta_j))\\
-&\propto \prod_{i=1}^n\exp\{-\frac{1}{2}(\beta_j-(\frac{Z_j^\top Z_j}{\sigma^2}+\Sigma^{-1})(\beta_j-(\frac{Z_j^\top Z_j}{\sigma^2}+\Sigma^{-1})^{-1}(\frac{Y_j^\top Z_j-X_j^\top Z_j\gamma}{\sigma^2}+\mu^\top \Sigma^{-1})^\top))\}
+\pi(\sigma|\boldsymbol{Y},\textbf{B}^\top, \boldsymbol{\mu}^\top,\boldsymbol{\Sigma},\boldsymbol{\gamma})
+&\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \\
+&\times \prod_{i=1}^n\exp\big\{-\frac{1}{2(\sigma^2 I)}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
 \end{aligned}
 }
 $$
@@ -274,7 +274,7 @@ $$
 \end{aligned}
 }
 $$
-where $N=\frac{X_i^\top X_i}{\sigma^2}+400I$ and $M=\sum_i^nY_i^\top X_i-\sum_i^nX_iZ_i\beta_i$
+where $N=\frac{X_i^\top X_i}{\sigma^2}+400I$ and $M=\frac{\sum_i^nY_i^\top X_i-\sum_i^nX_iZ_i\beta_i}{\sigma^2}$
 
 ## MCMC Algorithm - Metropolis-Hastings
 
@@ -398,11 +398,42 @@ knitr::include_graphics("plots/combinedgamma1.png")
 
 
 
-## MCMC Results - Sigma Inverse Plots 
+## MCMC Results - Sigma Plots 
 ```{r,echo=FALSE,out.width='90%',out.height='90%',fig.align='center'}
 knitr::include_graphics("plots/sigmainverse1.png")
 ```
 
+## Bayesian Model Performance
+-The overall mean RMSE is 6.467.
 
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
+knitr::include_graphics("q4/4.png")
+```
+
+
+## Bayesian Model Performance
+```{r}
+pic1 <- image_read("q4/1.jpg")
+pic2 <- image_read("q4/2.jpg")
+pic3 <- image_read("q4/3.jpg")
+# Combine the pictures side by side
+combined <- image_append(c(pic1, pic2,pic3), stack=FALSE)
+
+# Save the combined picture to a file
+image_write(combined, path = "q4/combine.png")
+
+# Open the combined picture using your system's image viewer
+system("q4/combine.png")
+```
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
+knitr::include_graphics("q4/combine.png")
+```
+\begin{center}                      
+Estimated Wind Speed vs. Predicted Wind Speed
+\end{center}
+
+## Limitations
+-Different initial values
+-Low performance on hurricanes without enough observations
 
 
