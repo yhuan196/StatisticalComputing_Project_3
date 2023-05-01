@@ -248,7 +248,7 @@ $$
 \end{aligned}
 }
 $$
-where $N=\frac{Z_j^\top Z_j}{\sigma^2}+\Sigma^{-1}$ and $M=\frac{Y_j^\top Z_j^\top-X_j^\top Z_j\gamma}{\sigma^2}+\mu^\top \Sigma^{-1}$
+where $N=\frac{Z_i^\top Z_i}{\sigma^2}+\Sigma^{-1}$ and $M=\frac{Y_i^\top Z_i^\top-X_i^\top Z_i\gamma}{\sigma^2}+\mu^\top \Sigma^{-1}$
 $$
 \scriptsize{
 \begin{aligned}
@@ -256,7 +256,7 @@ $$
 \end{aligned}
 }
 $$
-where $N=NA+\frac{1}{v}$ and $M=\sum_i^n\beta_jA$, and v is the degree of freedom.
+where $N=NA+\frac{1}{v}$ and $M=\sum_i^n\beta_iA$, and v is the degree of freedom.
 
 
 $$
@@ -274,7 +274,7 @@ $$
 \end{aligned}
 }
 $$
-where $N=\frac{X_j^\top X_j}{\sigma^2}+400I$ and $M=\sum_i^nY_j^\top X_j-\sum_i^nX_jZ_j\beta_j$
+where $N=\frac{X_i^\top X_i}{\sigma^2}+400I$ and $M=\sum_i^nY_i^\top X_i-\sum_i^nX_iZ_i\beta_i$
 
 ## MCMC Algorithm - Metropolis-Hastings
 
