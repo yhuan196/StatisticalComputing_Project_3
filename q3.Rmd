@@ -7,13 +7,153 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+library(tidyverse)
 ```
 
 #### 3. Compute posterior summaries and 95% credible intervals of $\gamma$, the fixed effects associated with the covariates in the model. Using the estimated Bayesian model, answer the following questions: (1) are there seasonal differences in hurricane wind speeds, and (2) is there evidence to support the claim that hurricane wind speeds have been increasing over the years?
 
-## Compute posterior summaries  
+# TASK
+
+## Compute posterior summaries of $\gamma$
+
+```{r}
+# load data from Q2 gibbs
+dataRDS = readRDS("./data/new_gibb5000.rds")
+
+#head(dataRDS) #dont do this, crazy
+
+names(dataRDS)
+# beta = dataRDS$B
+# mu = dataRDS$mu
+# sigmasq = dataRDS$sigmasq
+# SIGMA = dataRDS$SIGMA
+gamma = dataRDS$gamma
+
+# every element in the gamma list i.e.[[i]] is the ith gibbs run
+gamma[[1]] 
+as.matrix(gamma[[2]])
+
+L = length(gamma)
+
+# get last n gamma
+n = 1000
+df_gama = NULL
+
+for (i in 1:n) {
+    new = gamma[[L + 1 - i]]
+    df_gama <- rbind(df_gama, c(L + 1 - i, t(as.matrix(new))))
+}
+df_gama2 = as.data.frame(df_gama)
+names(df_gama2) = c("id",names(gamma[[L]]))
+head(df_gama2)
+
+```
+
+## plot month
+
+```{r}
+df_month <- df_gama2 %>%
+  select(-season, -TS, -ET, -SS, -NR) %>%
+  gather(key = "month", value = "value", -id)
+head(df_month)
+
+ggplot(df_month, aes(x = id, y = value)) + 
+  geom_line(aes(color = month, linetype = month)) 
+#+ scale_color_manual(values = c("darkred", "steelblue", "red"))
+```
+
+## plot year
+
+```{r}
+df_year <- df_gama2 %>%
+  select(id, season) %>%
+  gather(key = "name", value = "year", -id)
+head(df_year)
+
+ggplot(data = df_year, aes(x = id, y = year)) +
+  geom_line()
+```
+
+## plot type
+
+```{r}
+#theme_set(theme_minimal())
+df_type <- df_gama2 %>%
+  select(id, TS, ET, SS, NR) %>%
+  gather(key = "type", value = "value", -id)
+head(df_type)
+
+ggplot(df_type, aes(x = id, y = value)) + 
+  geom_line(aes(color = type, linetype = type)) 
+#+ scale_color_manual(values = c("darkred", "steelblue", "red"))
+```
+
 ## Compute 95% credible intervals of $\gamma$, the fixed effects associated with the covariates in the model.
+
+```{r}
+cred_int <- apply(df_gama2, 2, quantile, probs = c(0.025, 0.975))
+cred_int
+```
 
 ## (1) are there seasonal differences in hurricane wind speeds
 
+```{r}
+# E.X. May - April
+df_gama2$May_April <- (df_gama2$May - df_gama2$April)
+quantile(df_gama2$May_April, probs = c(0.025, 0.975))
+# include 0, meaning...no diff betw. May & April
+```
+
+```{r}
+# E.X. June - May
+df_gama2$J_M <- (df_gama2$June - df_gama2$May)
+quantile(df_gama2$J_M, probs = c(0.025, 0.975))
+# include 0, meaning...no diff betw. June & May
+```
+
+```{r}
+# E.X. Aug - July
+df_gama2$A_J <- (df_gama2$August - df_gama2$July)
+quantile(df_gama2$A_J, probs = c(0.025, 0.975))
+# include 0, meaning...no diff betw. Aug & July
+```
+
+```{r}
+df_summer =  df_gama2 %>% summarise(summer = sum(June, July, August))
+head(df_summer)
+
+df_summer =  df_gama2 %>% select(June, July, August)
+df_nosummer =  df_gama2 %>% select(April, May, September,
+                                   October, November, December)
+     
+summer_wd = rowSums(df_summer)/3
+nosummer_wd = rowSums(df_nosummer)/6
+
+summer_wd - nosummer_wd
+quantile(summer_wd - nosummer_wd, probs = c(0.025, 0.975))
+```
+
+
 ## (2) is there evidence to support the claim that hurricane wind speeds have been increasing over the years
+
+H0: gamma14 \<= 0; H1: gamma14 \> 0
+
+```{r}
+quantile(df_year$year, probs = c(0.025, 0.975))
+#         2.5%        97.5% 
+# -0.003099822 -0.001501638
+```
+
+The gamma associated with type (Nature of the hurricane) is smaller than 0, fail to reject H1. No evidence to support the claim that hurricane wind speeds have been increasing over the years.
+
+```{=tex}
+\begin{table}[]
+\begin{tabular}{|c|c|}
+\hline
+2.5\%        & 97.5\%       \\ \hline
+-0.003099822 & -0.001501638 \\ \hline
+\end{tabular}
+\end{table}
+```
