@@ -50,7 +50,7 @@ library(tidyverse)
 
 ## Introduction
 - Hurricanes cause fatalities and property damage
-- there is a growing need to accurately predict hurricane behavior, including location and speed
+- There is a growing need to accurately predict hurricane behavior, including location and speed
 - This project aims to forecast wind speeds by modeling hurricane trajectories using a Hierarchical Bayesian Model. 
 
 ## Dataset
@@ -344,23 +344,15 @@ We first fit a Generalize Linear Mixed Models(GLMM) \
 
 - $\gamma^{(0)}$: Fixed effects from the GLMM\
 
-## MCMC Results - Details
-- 5000 iterations
-- Estimates and inferences based on 5000 MCMC samples
 
-## MCMC Results - Beta Plots 1
+## MCMC Results - Beta Plots 
 ```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
 knitr::include_graphics("plots/beta1.png")
 ```
 -Trace plots of variance parameters, based on 5000 MCMC sample.
 
-## MCMC Results - Beta Plots 2
-```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
-knitr::include_graphics("plots/beta2.png")
-```
--Trace plots of variance parameters, based on 5000 MCMC sample.
 
-## MCMC Results - sigma^2 Plots 1
+## MCMC Results - sigma^2 Plots 
 ```{r}
 
 
@@ -382,26 +374,8 @@ system("plots/combinedsigma1.png")
 knitr::include_graphics("plots/combinedsigma1.png")
 ```
 
-## MCMC Results - sigma^2 Plots 2
-```{r}
 
-pic3 <- image_read("plots/sigma3.png")
-pic4 <- image_read("plots/sigma4.png")
-
-# Combine the pictures side by side
-combined <- image_append(c(pic3, pic4), stack=FALSE)
-
-# Save the combined picture to a file
-image_write(combined, "plots/combinedsigma2.png")
-
-
-```
-
-
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/combinedsigma2.png")
-```
-## MCMC Results - Gamma Plots 1
+## MCMC Results - Gamma Plots 
 ```{r}
 
 
@@ -418,36 +392,17 @@ image_write(combined, "plots/combinedgamma1.png")
 ```
 
 
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
+```{r,echo=FALSE,out.width='90%',out.height='90%',fig.align='center'}
 knitr::include_graphics("plots/combinedgamma1.png")
 ```
 
-## MCMC Results - Gamma Plots 2
-```{r}
-
-pic7 <- image_read("plots/gamma3.png")
-pic8 <- image_read("plots/gamma4.png")
-
-# Combine the pictures side by side
-combined <- image_append(c(pic7, pic8), stack=FALSE)
-
-# Save the combined picture to a file
-image_write(combined, "plots/combinedgamma2.png")
 
 
-```
-
-
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/combinedgamma2.png")
-```
-
-## MCMC Results - Sigma Inverse Plots 1
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
+## MCMC Results - Sigma Inverse Plots 
+```{r,echo=FALSE,out.width='90%',out.height='90%',fig.align='center'}
 knitr::include_graphics("plots/sigmainverse1.png")
 ```
 
-## MCMC Results - Sigma Inverse Plots 2
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/sigmainverse2.png")
-```
+
+
+
