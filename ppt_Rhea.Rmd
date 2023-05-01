@@ -1,8 +1,6 @@
-
-
 ---
-title: "P8160 - Project 3"
-subtitle: "P8160 Group Project 3 Baysian modeling of hurricane trajectories"
+title: "Bayesian modeling of hurricane trajectories"
+subtitle: "P8160 Project 3 MCMC"
 institute: Columbia University
 author: "Jingchen Chai, Yi Huang, Zining Qi, Ziyi Wang, Ruihan Zhang"
 date: "`r Sys.Date()`"
@@ -338,52 +336,42 @@ We first fit a Generalize Linear Mixed Models(GLMM) \
 
 - $\gamma^{(0)}$: Fixed effects from the GLMM\
 
+## MCMC Results - Convergence Plots of $\boldsymbol{B}$
 
-## MCMC Results - Convergence plot of $\boldsymbol{B}$
+- Trace plots based on 5000 MCMC sample.
 
-```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
-knitr::include_graphics("graph/beta.png")
-```
-
-
-
-## MCMC Results - Selected $\boldsymbol{B}$: Hurricane GEORGE.1951 
-
-```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
-knitr::include_graphics("graph/beta_hurricane GEORGE.1951.png")
-```
-
-
-## MCMC Results - Beta Plots 
-```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
 knitr::include_graphics("plots/beta1.png")
 ```
 
 
-## MCMC Results - sigma^2 Plots 
-```{r}
-
-
-pic1 <- image_read("plots/sigma1.png")
-pic2 <- image_read("plots/sigma2.png")
-
-# Combine the pictures side by side
-combined <- image_append(c(pic1, pic2), stack=FALSE)
-
-# Save the combined picture to a file
-image_write(combined, path = "plots/combinedsigma1.png")
-
-# Open the combined picture using your system's image viewer
-system("plots/combinedsigma1.png")
-```
-
+## Selected $\boldsymbol{B}$: Hurricane GEORGE.1951 
 
 ```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/combinedsigma1.png")
+knitr::include_graphics("graph/beta_hurricane GEORGE.1951.png")
+```
+
+## MCMC Results - Convergence plots of $\mu$
+
+```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
+knitr::include_graphics("graph/2.mu.png")
 ```
 
 
-## MCMC Results - Gamma Plots 
+## MCMC Results - Convergence and Distribution of $\sigma^2$ 
+
+```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
+knitr::include_graphics("graph/3.sigma^2.png")
+```
+
+
+## MCMC Results - Convergece Plots of $\Sigma$ 
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
+knitr::include_graphics("plots/sigmainverse1.png")
+```
+
+
+## MCMC Results - Convergece Plots of $\gamma$ 
 ```{r}
 
 
@@ -404,15 +392,9 @@ image_write(combined, "plots/combinedgamma1.png")
 knitr::include_graphics("plots/combinedgamma1.png")
 ```
 
-
-
-## MCMC Results - Sigma Plots 
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/sigmainverse1.png")
-```
-
 ## Bayesian Model Performance
--The overall mean RMSE is 6.467.
+
+- The overall mean RMSE is 6.467.
 
 ```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
 knitr::include_graphics("q4/4.png")
