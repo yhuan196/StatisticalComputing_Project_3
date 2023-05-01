@@ -407,9 +407,32 @@ knitr::include_graphics("plots/sigmainverse1.png")
 
 |$95\% CI$ | $2.5\%$ | $97.5\%$ |
 |:---:|:---:|:---:|
-| | $-0.003099822$ | $-0.001501638$ |
+| April | $-0.09922543$ | $0.09022636$ |
+| May | $-0.10038368$ | $0.09254019$ |
+| June | $-0.09761796$ | $0.09437084$ |
+| July | $-0.09928455$ | $0.10249011$ |
+| August | $-0.1028288$ | $0.0916931$ |
+| September | $-0.0931095$ | $0.1077383$ |
+| October | $-0.09762039$ | $0.09269326$ |
+| November | $-0.1097137$ | $0.1001810$ |
+| December | $-0.09799494$ | $0.09315765$ |
+| Year | $-0.003099822$ | $-0.001501638$ |
+| TS | $-0.08982878$ | $0.10641711$ |
+| ET | $-0.10332349$ | $0.09418438$ |
+| SS | $-0.09844162$ | $0.09384343$ |
+| NR | $-0.09398186$ | $0.09398186$ |
 
 ## Are there seasonal differences in hurricane wind speeds?
+- Summer month: June, July, August.
+- Non-summer month: April, May, September, October, November, December
+
+- $H_0$: $\gamma_{summer} = 0$; vs $H_1$: $\gamma_{summer} \ne 0$
+
+|$95\% CI$ | $2.5\%$ | $97.5\%$ |
+|:---:|:---:|:---:|
+| | $-0.1382282$ | $-0.1369877$ |
+
+- Fail to reject $H_1$. No evidence to support the claim that there are seasonal differences in hurricane wind speeds.
 
 ## Are hrricane wind speeds increasing over the years?
 - $H_0$: $\gamma_{10} \le 0$; vs $H_1$: $\gamma_{10} > 0$
