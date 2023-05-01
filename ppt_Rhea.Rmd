@@ -50,13 +50,10 @@ library(tidyverse)
 
 ## Introduction
 - Hurricanes cause fatalities and property damage
-- There is a growing need to accurately predict hurricane behavior, including location and speed
+- There is a growing need to accurately predict hurricane behavior, including location and speed(Taboga, 2021)
 - This project aims to forecast wind speeds by modeling hurricane trajectories using a Hierarchical Bayesian Model. 
 
-## Dataset
-- Hurrican703 dataset: 22038 observations $\times$ 8 variables 
-  + 702 hurricanes in the North Atlantic area since 1950
-  
+
 ## EDA-Count of Hurricanes in each Month
 
 ```{r, include = FALSE}
@@ -134,7 +131,39 @@ mapMonth <- map + facet_wrap(~ Month) +
 mapMonth
 ```
 
+## Data 
 
+**ID**: ID of hurricanes
+
+**Year**: In which year the hurricane occurred
+
+**Month**: In which month the hurricane occurred
+
+**Nature**: Nature of the hurricane
+
+- ET: Extra Tropical
+- DS: Disturbance
+- NR: Not Rated
+- SS: Sub Tropical
+- TS: Tropical Storm
+
+**Time**: dates and time of the record
+
+**Latitude** and **Longitude**: The location of a hurricane check point
+
+**Wind.kt**: Maximum wind speed (in Knot) at each check point
+
+
+## Data Pre-processing
+
+
+
+
+- We have filtered observations that occurred on a 6-hour intervals. (e.g., hour 0, 6, 12, 18)
+
+- Calculated the lag difference for latitude, longitude and wind speed. 
+
+- After data cleaning, we obtained 20293 observations and with 699 different hurricanes. 
 
 ## Bayesian Model
 
@@ -175,7 +204,7 @@ $$
 $$
 \scriptsize{
 \begin{aligned}
-P(\sigma) = \frac{2\alpha}{\pi+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2}
+P(\sigma) = \frac{2\alpha}{\pi+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2} = \frac{1}{\sigma^2+100}
 \end{aligned}
 }
 $$
@@ -185,15 +214,7 @@ $$
 Let $\textbf{B} = (\boldsymbol{\beta}_1^\top,..., \boldsymbol{\beta}_n^\top)^\top$, derive the posterior distribution of the parameters $\Theta = (\textbf{B}^\top, \boldsymbol{\mu}^\top, \sigma^2, \Sigma, \gamma)$.
 \
 \
-Let
-
-$$
-\scriptsize{
-\begin{aligned}
-\boldsymbol{Z}_i(t)\boldsymbol{\beta}_i^\top = \beta_{0,i} + \beta_{1,i}Y_i(t) + \beta_{2,i}\Delta_{i,1}(t) + \beta_{3,i}\Delta_{i,2}(t) + \beta_{4,i}\Delta_{i,3}(t) + \boldsymbol{X_i}\gamma+\epsilon_{i}(t)
-\end{aligned}
-}
-$$
+Let$\boldsymbol{Z}_i(t)\boldsymbol{\beta}_i^\top = \beta_{0,i} + \beta_{1,i}Y_i(t) + \beta_{2,i}\Delta_{i,1}(t) + \beta_{3,i}\Delta_{i,2}(t) + \beta_{4,i}\Delta_{i,3}(t) + \boldsymbol{X_i}\gamma+\epsilon_{i}(t)$
 We can find that
 $$
 \scriptsize{
@@ -203,12 +224,12 @@ $$
 }
 $$
 
-The likelihood for our data is
+The likelihood for Y is
 $$
 \scriptsize{
 \begin{aligned}
-f(Y \mid \boldsymbol B, \boldsymbol \mu, \sigma^2, \boldsymbol \Sigma,\gamma) =\\ \prod_{i = 1}^N f(Y_i | B, \mu, \Sigma, \sigma^2) = &\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\{-\frac{1}{2}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\}\\
-\propto & (2\pi\sigma^2)^{-\frac{N}{2}} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
+&f(Y \mid \boldsymbol B, \boldsymbol \mu, \sigma^2, \boldsymbol \Sigma,\gamma) = \prod_{i = 1}^N f(Y_i | B, \mu, \Sigma, \sigma^2)=\\&\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\{-\frac{1}{2}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\}\\
+&\propto  (2\pi\sigma^2)^{-\frac{N}{2}} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
 \end{aligned}
 }
 $$
@@ -219,10 +240,10 @@ where N is the total number of hurricanes.
 $$
 \scriptsize{
 \begin{aligned}
-\pi(\Theta|Y) = & P(B, \mu, \sigma^2, \Sigma, \gamma|Y) \\ 
-&\propto \underbrace{L(Y| B, \sigma^2)}_{\text{likelihood of } \boldsymbol{Y}}\underbrace{L(B|\mu,\Sigma)}_{\text{distribution of }\textbf{B}}\underbrace{p(\mu)p(\sigma)p(\Sigma)p(\gamma)}_{\text{priors}}\\
+&\pi(\Theta|Y) =  P(B, \mu, \sigma^2, \Sigma, \gamma|Y)  
+\propto \underbrace{L(Y| B, \sigma^2)}_{\text{likelihood of } \boldsymbol{Y}}\underbrace{L(B|\mu,\Sigma)}_{\text{distribution of }\textbf{B}}\underbrace{p(\mu)p(\sigma)p(\Sigma)p(\gamma)}_{\text{priors}}\\
 &\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}\\
-&\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top \Sigma^{-1}(\beta_i-\mu)\} |\Sigma^{-1}|^{\frac{N+d+v+1}{2}} \exp\{-\frac{1}{2}tr(S\Sigma^{-1})\}|\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\exp\{-200\gamma^2\}
+&\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top \Sigma^{-1}(\beta_i-\mu)\} |\Sigma^{-1}|^{\frac{N+d+v+1}{2}} \exp\{-\frac{1}{2}tr(S\Sigma^{-1})\}|\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\\&\times\exp\{-200\gamma^2\}
 \end{aligned}
 }
 $$
@@ -318,11 +339,25 @@ We first fit a Generalize Linear Mixed Models(GLMM) \
 - $\gamma^{(0)}$: Fixed effects from the GLMM\
 
 
+## MCMC Results - Convergence plot of $\boldsymbol{B}$
+
+```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
+knitr::include_graphics("graph/beta.png")
+```
+
+
+
+## MCMC Results - Selected $\boldsymbol{B}$: Hurricane GEORGE.1951 
+
+```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
+knitr::include_graphics("graph/beta_hurricane GEORGE.1951.png")
+```
+
+
 ## MCMC Results - Beta Plots 
 ```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
 knitr::include_graphics("plots/beta1.png")
 ```
--Trace plots of variance parameters, based on 5000 MCMC sample.
 
 
 ## MCMC Results - sigma^2 Plots 
@@ -365,14 +400,14 @@ image_write(combined, "plots/combinedgamma1.png")
 ```
 
 
-```{r,echo=FALSE,out.width='90%',out.height='90%',fig.align='center'}
+```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
 knitr::include_graphics("plots/combinedgamma1.png")
 ```
 
 
 
-## MCMC Results - Sigma Plots 
-```{r,echo=FALSE,out.width='90%',out.height='90%',fig.align='center'}
+## MCMC Results - Sigma Inverse Plots 
+```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
 knitr::include_graphics("plots/sigmainverse1.png")
 ```
 
@@ -407,7 +442,24 @@ Estimated Wind Speed vs. Predicted Wind Speed
 
 ## Limitations
 -Different initial values
+
 -Low performance on hurricanes without enough observations
 
 ## Conclusion
+- Our MCMC algorithm successfully estimates the high-dimensional parameters
+
+    + All the parameters converges under a good initial values setting
+    
+    + The overall $R^2$ is relatively large, and the overall RMSE is relatively small, so our model  fits the data well
+
+- There are no discernible variations between the months. The impact of the wind speed from six months ago on the current wind speed may gradually diminish with time. 
+
+- When it comes to foretelling the harm and fatalities brought on by storms, the $\beta_i$ coefficients calculated from the Bayesian model are effective.
+
+## Reference
+Taboga, Marco (2021). "Markov Chain Monte Carlo (MCMC) diagnostics", Lectures on probability theory and mathematical statistics. Kindle Direct Publishing. Online appendix.
+
+## Q&A
+
+Thank you for your attention. Any questions?
 
