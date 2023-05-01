@@ -406,7 +406,7 @@ knitr::include_graphics("plots/combinedgamma1.png")
 
 
 
-## MCMC Results - Sigma Inverse Plots 
+## MCMC Results - Sigma Plots 
 ```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
 knitr::include_graphics("plots/sigmainverse1.png")
 ```
@@ -452,7 +452,7 @@ Estimated Wind Speed vs. Predicted Wind Speed
     
     + The overall $R^2$ is relatively large, and the overall RMSE is relatively small, so our model  fits the data well
 
-- There are no discernible variations between the months. The impact of the wind speed from six months ago on the current wind speed may gradually diminish with time. 
+- There are no discernible variations between the months. The impact of the wind speed from six months ago on the current wind speed may gradually diminish over time. 
 
 - When it comes to foretelling the harm and fatalities brought on by storms, the $\beta_i$ coefficients calculated from the Bayesian model are effective.
 
