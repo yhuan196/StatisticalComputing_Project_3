@@ -210,6 +210,7 @@ f(Y \mid \boldsymbol B, \boldsymbol \mu, \sigma^2, \boldsymbol \Sigma,\gamma) =\
 }
 $$
 where N is the total number of hurricanes.
+
 ## Joint Posterior
 
 $$
@@ -270,11 +271,11 @@ $$
 $$
 \scriptsize{
 \begin{aligned}
-\gamma \sim MVN(N^{-1}M^\top,N^{-1})
+\gamma \sim MVN(M^{-1}N,M^{-1})
 \end{aligned}
 }
 $$
-where $N=\frac{X_i^\top X_i}{\sigma^2}+400I$ and $M=\frac{\sum_i^nY_i^\top X_i-\sum_i^nX_iZ_i\beta_i}{\sigma^2}$
+where $N=\sum_i^nX_i^\top\sigma^{-1}IX_i+400I$ and $M=\frac{\sum_i^nX_i^\top Y_i-X_i^\top Z_i\beta_i}{\sigma^2}$
 
 ## MCMC Algorithm - Metropolis-Hastings
 
@@ -436,4 +437,4 @@ Estimated Wind Speed vs. Predicted Wind Speed
 -Different initial values
 -Low performance on hurricanes without enough observations
 
-
+## Conclusion
