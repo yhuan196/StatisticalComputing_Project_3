@@ -1,28 +1,10 @@
----
-title: "mcmc 6000 iteration"
-output: github_document
-date: "2023-04-26"
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-
-library(tidyr)
-library(tidyverse)
-library(lubridate)
-library(doParallel)
-library(pracma)
-library(gsubfn)
-library(matrixsampling)
-library(lme4) ## for ranef function
-library(rockchalk) ## for mvrnorm function
-library(corpcor) ## for make.positive.definite function
-```
-
+mcmc 6000 iteration
+================
+2023-04-26
 
 # Data processing
 
-```{r}
+``` r
 data=read_csv("data/hurrican703.csv")%>%
   janitor::clean_names() %>%
   # reformat the time 
@@ -93,12 +75,9 @@ Zi_sort = data_sort %>%
   dplyr::select(intercept, wind_prev, latitude_d, longitude_d, wind_kt_d,id) %>% nest() %>% pull(data)
 ```
 
-
-
-
 # GLMM model
 
-```{r}
+``` r
 glmm.hurricane.1 <- lme4::glmer(wind_kt ~ month+season+nature +
                                   (1+wind_prev+latitude_d+longitude_d+wind_kt_d|id),
                        family = 'gaussian', data = data)
@@ -115,12 +94,9 @@ beta_raw2[, 1] = beta_raw2[, 1] + gamma_start[1]
 B_start2 = beta_raw2 %>% t()
 ```
 
-
-
-
 # Posterior
 
-```{r B.post}
+``` r
 B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
   res = NULL
   n = length(zdat)
@@ -148,8 +124,7 @@ B = function(zdat,ydat,xdat,mu_est, sigma, sigma_inv,gamma){
 testB <- B(Zi_sort,Yi_sort,Xi_sort2, as.matrix(c(-10,2,3,4,5)), 5, diag(c(1,1,1,1,1)), as.matrix(gamma_start2))
 ```
 
-
-```{r mu.post}
+``` r
 mu_est = function(B, sigma_inv){
   res= matrix(0, nrow=5, ncol=1)
   N = ncol(B)
@@ -170,8 +145,7 @@ mu_est = function(B, sigma_inv){
 testmu=mu_est(as.matrix(testB),diag(2,5,5))
 ```
 
-
-```{r Sigma.post}
+``` r
 sigma_inv=function(B, mu_est) {
   res= matrix(0,nrow=5,ncol=5)
   N = ncol(B) # N is number of hurricane
@@ -191,8 +165,7 @@ sigma_inv=function(B, mu_est) {
 testsigmainv=sigma_inv(as.matrix(testB),testmu)
 ```
 
-
-```{r gamma.post}
+``` r
 gamma = function(B,zdat, ydat,xdat, sigma) {
 
   n = length(zdat)
@@ -215,106 +188,9 @@ gamma = function(B,zdat, ydat,xdat, sigma) {
 testgamma=gamma(testB,Zi_sort,Yi_sort,Xi_sort2,5)
 ```
 
-
-```{r sigma.mh, include=FALSE}
-compute_res = function(zdat, xdat, ydat, beta, gamma) {
-  res = NULL
-  for (i in 1:length(zdat)){
-    z = as.matrix(zdat[[i]])
-      #y = as.matrix(yi[[i]])
-      #x=  as.matrix(Xi[[i]])
-    betai = beta[ ,i] %>% matrix(nrow = 5)
-    Z_mu <- z %*% betai  
-    res = rbind(res, Z_mu)
-  }
-  resid = ydat - res - xdat %*% gamma
-  return(resid)
-}
-
-#Y_mtx = data_sort$wind_kt
-```
-
-
-```{r, include = FALSE}
-compute_res(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start2)
-compute_res(Zi_sort, as.matrix(X_sort2), Y_mtx, B_start2, as.matrix(gamma_start2))
-
-
-log_posterior_sigma <- function(zdat, xdat, ydat, beta, gamma, sigma){
-  resid = compute_res(zdat, xdat, ydat, beta, gamma)
-  n = length(resid)
-  return(-n*log(sigma) - 1/(2*sigma^2)*sum(resid^2) - log(1+(sigma/10)^2))
-}
-
-#log_posterior_sigma(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start, 5)
-
-sigma_propose <- function(zdat, xdat, ydat, beta, gamma, sigma_current, a){
-    sigma_next = sigma_current + (runif(1) - 0.5) * 2 * a
-    alpha = log_posterior_sigma(zdat, xdat, ydat, beta, gamma, sigma_next) - log_posterior_sigma(zdat, xdat, ydat, beta, gamma, sigma_current)
-    ifelse(a > log(runif(1)), return(sigma_next), return(sigma_current))
-}
-  
-sigma_propose(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start2, 5, 0.5)
-
-
-
-sigma_sample <- function(sigma, B, gamma, a){
-  next.sg = sigma + (runif(1) - 0.5) *2 *a
-  n = length(Zi_sort)
-  if (next.sg <= 0){
-    return(sigma)
-  }
-  RSS = sum(compute_res(Zi_sort, as.matrix(X_sort2), Y_mtx, B, gamma)^2)
-  ratio = -n * log(next.sg/sigma) +
-    log(1 + (sigma/10)^2) - log(1 + (next.sg/10)^2) -
-    0.5 *(1/next.sg^2 - 1/sigma^2) * RSS
-  prob = min(0, ratio)
-  sigma_propose = ifelse(prob > log(runif(1)), next.sg, sigma)
-  return(sigma_propose)
-}
-                          # candidate sigmaif (sigma new < 0) f
-
-sigma_sample(5, B_start2, as.matrix(gamma_start2), 0.5)
-
-
-sigma_MH <- function(zdat, xdat, ydat, beta, gamma, sigma_start, a, niter) {
-    sigmavec <- rep(NA, niter)
-    sigmavec[1] <- sigma_start
-    for(i in 2:niter)
-      sigmavec[i] <- sigma_propose(zdat, xdat, ydat, beta, gamma, sigmavec[i-1], a)
-    return(sigmavec)
-}
-
-mh_sim = sigma_MH(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start2, 5, 0.5, 200)
-#df.sigma = data_frame(mh_sim)
-#write.csv(df.sigma, './sigma_md_df.csv')
-#plot(mh_sim[1:300],type="l",ylab="index")
-
-#mh_sim2 = sigma_MH(Z_sort, X_mtx, Y_mtx, B_sort, gamma_start, 5, 2, 1000)
-#df.sigma2 = data_frame(mh_sim2)
-#write.csv(df.sigma2, './sigma_md_df2.csv')
-#plot(mh_sim2[1:1000],type="l",ylab="index")
-
-
-
-
-
-
-sigma = function(zdat, xdat, ydat, beta, gamma, sigma_start, a, niter){
-  mh_res = sigma_MH(zdat, xdat, ydat, beta, gamma, sigma_start, a, niter) 
-  sigma_res = mean(mh_res[(niter-50):niter])
-  return(sigma_res)
-}
-
-sigmatest = sigma(Zi_sort, X_mtx, Y_mtx, B_sort, gamma_start2, 5, 0.5, 200)
-```
-
-
-
-
 # Gibb sampling
 
-```{r}
+``` r
 gibb <- function(niter,zdat, ydat,xdat, B_start,mustart,sigma_start, sigmainv_start, gamma_start) {
   Bvec = list(B_start)
   muvec = list(mustart)
@@ -336,21 +212,18 @@ gibb <- function(niter,zdat, ydat,xdat, B_start,mustart,sigma_start, sigmainv_st
 }
 ```
 
-```{r}
+``` r
 # mh_res_6000 = gibb(6000, Zi_sort,Yi_sort,Xi_sort2, B_start2, as.matrix(c(5,2,3,4,5)), 5, diag(c(1,1,1,1,1)), as.matrix(gamma_start2))
 ```
 
-```{r}
+``` r
 # # saveRDS(mh_res_5000, file = "data/new_gibb5000_4.49.rds")
 # saveRDS(mh_res_6000, file = "data/new_gibb6000.rds")
 ```
 
-
-
 # Plot
 
-
-```{r}
+``` r
 ##### Plot for 6000 iterations
 plot_df=readRDS("data/new_gibb6000.rds")
 
@@ -361,9 +234,9 @@ testSIGMA = plot_df$SIGMA[[6000]]
 testgamma=plot_df$gamma[[6000]]
 ```
 
-
 ## Beta plot
-```{R}
+
+``` r
 beta.res.plot <- NULL
 for (i in 1:6000) {
   B.res = plot_df$B[[i]]
@@ -396,15 +269,20 @@ plot(beta.res.plot[,3],type = "l", main = bquote("Trace plot of "~ beta[2]), yla
 abline(v = 3000, col = 2, lty = 4)
 plot(beta.res.plot[,4],type = "l", main = bquote("Trace plot of "~ beta[3]), ylab = bquote(beta[3]))
 abline(v = 3000, col = 2, lty = 4)
+```
+
+![](mcmc_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
 plot(beta.res.plot[,5],type = "l", main = bquote("Trace plot of "~ beta[4]), ylab = bquote(beta[4]))
 abline(v = 3000, col = 2, lty = 4)
 ```
 
+![](mcmc_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
 
-
-\newpage
 ## sigma^2 plot
-```{r}
+
+``` r
 burn=1
 chain_length=6000
 #sigmasq
@@ -414,16 +292,25 @@ for (i in burn:chain_length) {
 }
 
 cur_s %>% acf()
+```
+
+![](mcmc_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
 cur_s %>% ts.plot(gpars=list(ylab="sigma^2"))
+```
+
+![](mcmc_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
+
+``` r
 data.frame(cur_s) %>% ggplot(aes(x = cur_s)) + geom_histogram(bins = 50)
 ```
 
+![](mcmc_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
 
-
-\newpage
 ## Gamma plot
 
-```{r}
+``` r
 gamma.res.plot <- data.frame(matrix(nrow = 14, ncol = 6000))
 
 for (i in 1:6000) {
@@ -444,8 +331,9 @@ plot(gamma.res.plot[,3],type = "l", main = bquote("Trace plot of "~ gamma[3]), y
 plot(gamma.res.plot[,4],type = "l", main = bquote("Trace plot of "~ gamma[4]), ylab=bquote(gamma[4]))
 ```
 
+![](mcmc_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
-```{r}
+``` r
 par(mfrow=c(2,2))
 plot(gamma.res.plot[,5],type = "l", main = bquote("Trace plot of "~ gamma[5]), ylab = bquote(gamma[5]))
 plot(gamma.res.plot[,6],type = "l", main = bquote("Trace plot of "~ gamma[6]), ylab = bquote(gamma[6]))
@@ -453,20 +341,28 @@ plot(gamma.res.plot[,7],type = "l", main = bquote("Trace plot of "~ gamma[7]), y
 plot(gamma.res.plot[,8],type = "l", main = bquote("Trace plot of "~ gamma[8]), ylab = bquote(gamma[8]))
 ```
 
+![](mcmc_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
-```{r}
+``` r
 par(mfrow=c(2,2))
 plot(gamma.res.plot[,9],type = "l", main = bquote("Trace plot of "~ gamma[9]), ylab = bquote(gamma[9]))
 plot(gamma.res.plot[,10],type = "l", main = bquote("Trace plot of "~ gamma[10]), ylab=bquote(gamma[10]))
 plot(gamma.res.plot[,11],type = "l", main = bquote("Trace plot of "~ gamma[11]), ylab=bquote(gamma[10]))
 plot(gamma.res.plot[,11],type = "l", main = bquote("Trace plot of "~ gamma[12]), ylab=bquote(gamma[12]))
+```
+
+![](mcmc_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
 plot(gamma.res.plot[,13],type = "l", main = bquote("Trace plot of "~ gamma[13]), ylab=bquote(gamma[13]))
 plot(gamma.res.plot[,14],type = "l", main = bquote("Trace plot of "~ gamma[14]), ylab=bquote(gamma[14]))
 ```
 
-\newpage
+![](mcmc_files/figure-gfm/unnamed-chunk-12-2.png)<!-- -->
+
 ## Sigma_inverse plot
-```{r}
+
+``` r
 Sigma_inv.res.plot = NULL
 for (i in 1:6000) {
   Sigma_inv.res = diag(plot_df$SIGMA[[i]])
@@ -483,6 +379,13 @@ plot(Sigma_inv.res.plot[,3],type = "l", main = bquote("Trace plot of "~ Sigma[3]
 abline(v = 3000, col = 2, lty = 4)
 plot(Sigma_inv.res.plot[,4],type = "l", main = bquote("Trace plot of "~ Sigma[4]), ylab = bquote(Sigma[4]))
 abline(v = 3000, col = 2, lty = 4)
+```
+
+![](mcmc_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
 plot(Sigma_inv.res.plot[,5],type = "l", main = bquote("Trace plot of "~ Sigma[5]), ylab = bquote(Sigma[5]))
 abline(v = 3000, col = 2, lty = 4)
 ```
+
+![](mcmc_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
