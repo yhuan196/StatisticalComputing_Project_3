@@ -131,7 +131,7 @@ df_nosummer =  df_gama2 %>% select(April, May, September,
 summer_wd = rowSums(df_summer)/3
 nosummer_wd = rowSums(df_nosummer)/6
 
-summer_wd - nosummer_wd
+head(summer_wd - nosummer_wd)
 quantile(summer_wd - nosummer_wd, probs = c(0.025, 0.975))
 ```
 
