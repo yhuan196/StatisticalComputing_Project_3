@@ -1,0 +1,163 @@
+---
+title: "q4"
+output: html_document
+date: "2023-04-30"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+library(tidyr)
+library(tidyverse)
+library(lubridate)
+library(MASS)
+library(progress)
+library(foreach)
+library(doParallel)
+library(pracma)
+library(gsubfn)
+library(matrixsampling)
+library(lme4)
+library(Metrics)
+library(gridExtra)
+# numCores = detectCores()
+# registerDoParallel(numCores) 
+```
+
+```{r}
+plot_df=readRDS("data/new_gibb5000.rds")
+
+```
+
+
+```{r}
+data=read_csv("data/hurrican703.csv")%>%
+  janitor::clean_names() %>%
+  # reformat the time 
+  tidyr::separate(
+    time, c('Date', 'Time'), 
+    sep = ' ', extra = 'merge') %>% 
+  tidyr::separate(
+    Date, c('year_num', 'month_num', 'day'), 
+    sep = '-', extra = 'merge') %>% 
+  tidyr::separate(
+    Time, c('hour', 'min', 'sec'), 
+    sep =':', extra = 'merge')  %>%
+  mutate(
+    year_num=gsub('[^[:alnum:] ]',"",year_num),
+    sec=gsub('[^[:alnum:] ]',"",sec)
+  ) %>%
+  dplyr::select(id, nature, latitude, longitude, wind_kt, 
+         season, month, day, hour, min) %>%
+  # filter the time with 6 hours change
+  filter(
+  hour %in% c("00", "06", "12", "18"),
+         min == "00") %>%
+  group_by(id) %>% 
+  # changes 
+  mutate(latitude_d = latitude - lag(latitude, 1),
+         longitude_d = longitude - lag(longitude, 1),
+         wind_kt_d = lag(wind_kt, 1) - lag(wind_kt, 2),
+         wind_prev = lag(wind_kt, 1),
+         month = factor(month,levels = month.name)) %>% 
+  na.omit() %>% 
+  mutate(intercept = 1) 
+
+
+```
+
+
+```{r}
+data_d =
+  data %>% 
+    dplyr::select(c("id", "wind_kt", "intercept", "wind_prev", "latitude_d", "longitude_d", "wind_kt_d")) 
+
+id=unique(data_d$id)
+
+id_df <- NULL
+for (i in 1:length(id)) {
+    dt_temp =  data_d[which(data_d$id == id[i]),][,2:7]
+    id_df = c(id_df,  id[i])}
+
+```
+
+```{r}
+dt_matrix = data_d%>% filter(id %in% id_df) %>% nest() %>% pull(data)
+```
+
+```{r}
+dt_train = list(NULL)
+dt_test = list(NULL)
+set.seed(2023)
+for(i in 1:length(dt_matrix)){
+    dt_temp = dt_matrix[[i]]
+    rowTrain = sample(nrow(dt_temp), ceiling(0.8 * nrow(dt_temp)))
+    train_ = dt_temp[rowTrain,]
+    test_ = dt_temp[-rowTrain,]
+    dt_train[[i]] = train_
+    dt_test[[i]] = test_
+}
+
+dt_train_id = NULL
+dt_test_id = NULL
+for (i in 1:length(dt_train)){
+    temp_train = dt_train[[i]]
+    temp_test = dt_test[[i]]
+    temp_train$id = id_df[[i]]
+    temp_test$id = id_df[[i]]
+    dt_train_id = rbind(dt_train_id, temp_train)
+    dt_test_id = rbind(dt_test_id, temp_test)
+}
+
+```
+
+
+```{r}
+beta_res = matrix(rep(0,5*699), 5, 699)
+for (i in 1:5000) {
+    B.res = plot_df$B[[i]]
+    B.res = as.data.frame(B.res)
+    beta_res = beta_res + B.res
+}
+
+beta_res_ave = beta_res/ 5000
+beta_res_ave=t(beta_res_ave)%>%as.data.frame()
+```
+
+```{r}
+colnames(beta_res_ave)[colnames(beta_res_ave) == "(Intercept)"] <- "intercept"
+beta_res_ave = beta_res_ave %>% rename(beta_0 = intercept, beta_1 = wind_prev, beta_2 = latitude_d,  beta_3 = longitude_d, beta_4 = wind_kt_d)
+beta_res_ave$id <- rownames(beta_res_ave)
+
+dt_res = merge(dt_test_id, beta_res_ave, by = "id")
+
+dt_res = dt_res %>% 
+  mutate(wind_kt_pred = beta_0*intercept+beta_1*wind_prev
+         +beta_2*latitude_d+beta_3*longitude_d+beta_4*wind_kt_d) %>%
+  group_by(id) %>% 
+  mutate(r_square = 1-(sum((wind_kt_pred-wind_kt)^2))/(sum((wind_kt-mean(wind_kt))^2)),
+         rmse = rmse(wind_kt,wind_kt_pred))
+
+```
+
+```{r}
+  rmse_df=
+  dt_res %>% 
+  dplyr::select(id, r_square, rmse) %>% 
+  distinct() %>% 
+  mutate(r_square = round(r_square, 3),
+         rmse = round(rmse,3)) %>% 
+  filter(r_square > 0 && r_square < 1) %>% 
+  arrange(rmse)
+mean(rmse_df$r_square)
+mean(rmse_df$rmse)
+rmse_samp = rmse_df[sample(nrow(rmse_df), 20), ]
+png("rmse_samp.png",  height = 500, width = 500, bg = "grey")
+grid.table(rmse_samp)
+dev.off()
+```
+
+
+
+
