@@ -1,0 +1,203 @@
+---
+title: "Hierarchical Baysian Modeling of Hurricane Trajectories"
+subtitle: "P8160 Group Project 3 - Markov chain Monte Carlo"
+date: "May 2, 2023"
+author: "Jingchen Chai, Yi Huang, Zining Qi, Ziyi Wang, Ruihan Zhang"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+  keep_tex: true
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '2'
+header-includes:
+- \usepackage{hyperref}
+- \hypersetup{colorlinks=false, linktoc=all, linkcolor=red}
+# - \AtBeginDocument{\addtocontents{toc}{\protect\hypertarget{mylink}{}\hspace{0.25in}\hspace{0.5in}\par}}
+- \usepackage{placeins}
+- \usepackage{caption}
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\thepage}
+- \usepackage{amsmath}
+
+--- 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, results = 'asis', fig.align = "center")
+```
+
+\newpage
+```{r,include=FALSE}
+library(ggplot2)
+```
+
+# Abstract
+
+
+
+# Introduction
+
+
+
+# Background
+
+
+
+# Exploratory Data Analysis
+
+
+# Methodology
+
+## Hierarchical Bayesian Model
+
+The suggested Bayesian model is 
+$$Y_{i}(t+6) =\beta_{0,i}+\beta_{1,i}Y_{i}(t) + \beta_{2,i}\Delta_{i,1}(t)+ \beta_{3,i}\Delta_{i,2}(t) +\beta_{4,i}\Delta_{i,3}(t)  +\boldsymbol{X_i}\gamma+ \epsilon_{i}(t)$$
+
+- where $Y_{i}(t)$ the wind speed at time $t$ (i.e. 6 hours earlier),  $\Delta_{i,1}(t)$, $\Delta_{i,2}(t)$ and $\Delta_{i,3}(t)$ are the changes of latitude, longitude and wind speed between $t$ and $t-6$, and $\epsilon_{i,t}$ follows a  normal distributions with mean zero and variance $\sigma^2$, independent across $t$. 
+
+- $\boldsymbol{X}_i = (x_{i,1},x_{i,2},x_{i,3})$ are covariates with fixed
+effect $\gamma$, where $x_{i,1}$ be the month of year when the $i$-th
+hurricane started, $x_{i,2}$ be the calendar year of the $i$ hurricane,
+and $x_{i,3}$ be the type of the $i$-th hurricane.
+
+- $\boldsymbol{\beta}_{i} =  (\beta_{0,i},\beta_{1,i},...,\beta_{5,i})$, we assume that $\boldsymbol{\beta}_{i} \sim N(\boldsymbol{\mu}, \boldsymbol{\Sigma})$.
+
+### Prior Distribution
+$$
+\begin{aligned}
+\quad P(\boldsymbol{\mu}) = \frac{1}{\sqrt{2\pi}|\boldsymbol V|^{\frac{1}{2}}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\propto |\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}
+\end{aligned}
+$$
+\begin{center} 
+where $\boldsymbol{V}$ is a variance-covariance matrix
+\end{center} 
+
+$$
+\begin{aligned}
+\quad P(\Sigma) \propto 
+|\Sigma|^{-\frac{(\nu+d+1)}{2}} \exp(-\frac{1}{2}tr(S\Sigma^{-1}))
+\end{aligned}
+$$
+
+\begin{center} 
+where $d$ is the dimension of $\boldsymbol{\beta}_{i}$.
+\end{center} 
+
+$$
+\begin{aligned}
+P(\gamma) \propto exp(-\frac{\gamma^2}{2\times(0.05)^2}) =e^{-200\gamma^2}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+P(\sigma) = \frac{2\alpha}{\sigma^2+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2} = \frac{1}{\sigma^2+100}
+\end{aligned}
+$$
+
+### Posterior
+
+Let $\textbf{B} = (\boldsymbol{\beta}_1^\top,..., \boldsymbol{\beta}_n^\top)^\top$, derive the posterior distribution of the parameters $\Theta = (\textbf{B}^\top, \boldsymbol{\mu}^\top, \sigma^2, \Sigma, \gamma)$.
+\
+\
+Let$\boldsymbol{Z}_i(t)\boldsymbol{\beta}_i^\top = \beta_{0,i} + \beta_{1,i}Y_i(t) + \beta_{2,i}\Delta_{i,1}(t) + \beta_{3,i}\Delta_{i,2}(t) + \beta_{4,i}\Delta_{i,3}(t) + \boldsymbol{X_i}\gamma+\epsilon_{i}(t)$
+We can find that
+$$
+\scriptsize{
+\begin{aligned}
+\boldsymbol{Y_i} {\sim} MVN(\boldsymbol{Z}_i\boldsymbol{\beta}_i, \sigma^2I)
+\end{aligned}
+}
+$$
+
+The likelihood for Y is
+$$
+\scriptsize{
+\begin{aligned}
+&f(Y \mid \boldsymbol B, \boldsymbol \mu, \sigma^2, \boldsymbol \Sigma,\gamma) = \prod_{i = 1}^n f(Y_i | B, \mu, \Sigma, \sigma^2)=\\&\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\{-\frac{1}{2}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\}\\
+&\propto  (2\pi\sigma^2)^{-\frac{n}{2}} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
+\end{aligned}
+}
+$$
+
+### Joint Posterior
+
+$$
+\scriptsize{
+\begin{aligned}
+&\pi(\Theta|Y) =  P(B, \mu, \sigma^2, \Sigma, \gamma|Y)  
+\propto \underbrace{L(Y| B, \sigma^2)}_{\text{likelihood of } \boldsymbol{Y}}\underbrace{L(B|\mu,\Sigma)}_{\text{distribution of }\textbf{B}}\underbrace{p(\mu)p(\sigma)p(\Sigma)p(\gamma)}_{\text{priors}}\\
+&\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}\\
+&\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top \Sigma^{-1}(\beta_i-\mu)\} |\Sigma^{-1}|^{\frac{N+d+v+1}{2}} \exp\{-\frac{1}{2}tr(S\Sigma^{-1})\}|\boldsymbol V|^{-\frac{1}{2}}\\
+&\times \exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\} \\
+&\times\exp\{-200\gamma^2\}
+\end{aligned}
+}
+$$
+where $\boldsymbol{V}$ is a variance-covariance matrix, N is the total number of hurricanes and d is the dimension of $\beta$, and v is the degree of freedom.
+
+## Conditional Posterior Distribution
+
+
+
+# Results
+
+In Markov Chain Monte Carlo, determining the appropriate number of iterations can depend on many factors such as the complexity of the model, the size of the dataset, etc. Therefore, it is difficult to make a general statement about a specific number of iterations that will be sufficient for all MCMC simulations. In our algorithm, we believe for most of the parameters, 5000 iterations reached the stationary of their posterior distribution. For convergence diagnostics, we generate trace plots, autocorrelation plots, and histograms.
+
+## Random effect parameter
+
+Figure 1 shows convergence plots of $\boldsymbol{B}$. $\beta_1$ takes only a few steps to reach stationary. The trace plot shows the history of our parameter $\beta_1$ across iterations of the chain. This chain appears most likely to converge with an average value of about 0.95. Similarly for $\beta_4$, the chain appears most likely to converge with an average value of about 0.48. $\beta_2$ and $\beta_3$ need to take more iterations to achieve convergence. In Figure 2, we extract Hurricane George 1951 from the data to check its $\beta$ convergence plots and distribution. We can see on trace plot of 5000 iterations for the selected parameter, each of the distributions are relatively normal with some heavy tails in $\beta_0$.
+
+The Convergence plot of $\sigma^2$ suggests that the chain is mixing well and that the algorithm is converging to its posterior distribution of sigma^2. After iteration 500, this chain appears to converge with an average value of 34.5 This also indicates that the estimated values of $\sigma^2$ are becoming more independent and less influenced by their past values as iterations increase.
+
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+
+```
+\begin{center}
+Figure 1
+\end{center}
+
+Figure 2 shows the selected $\boldsymbol{B}$: Hurricane GEORGE.1951 
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("graph/beta_hurricane GEORGE.1951.png")
+```
+\begin{center}
+Figure 2
+\end{center}
+
+## Fix effect parameter $\gamma$
+
+
+
+
+# Limitation and Discussion 
+
+# Conclusion
+
+
+
+# References
+
+Taboga, Marco (2021). "Markov Chain Monte Carlo (MCMC) diagnostics", Lectures on probability theory and mathematical statistics. Kindle Direct Publishing. Online appendix.
+
+Polson, N. G., & Scott, J. G. (2012). On the half-Cauchy prior for a global scale parameter.
+
+Zhang, Z. (2021). A Note on Wishart and Inverse Wishart Priors for Covariance Matrix. Journal of Behavioral Data Science, 1(2), 119–126.
+
+# Contributions
+
+
+
+# A First section of Appendix
+
+```{r, eval = FALSE}
+
+```
+
+# B Section section of Appendix
