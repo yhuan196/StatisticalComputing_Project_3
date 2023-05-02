@@ -480,6 +480,8 @@ Estimated Wind Speed vs. Predicted Wind Speed
 ## Reference
 Taboga, Marco (2021). "Markov Chain Monte Carlo (MCMC) diagnostics", Lectures on probability theory and mathematical statistics. Kindle Direct Publishing. Online appendix.
 
+Zhang, Z. (2021). A Note on Wishart and Inverse Wishart Priors for Covariance Matrix. Journal of Behavioral Data Science, 1(2), 119–126.
+
 ## Q&A
 
 Thank you for your attention. Any questions?
