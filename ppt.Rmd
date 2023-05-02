@@ -21,49 +21,76 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F, warning = F, message = F)
 
-library(tidyverse)
 library(base)
 library(caret)
 library(corrplot)
 library(plotmo)
 library(ggplot2)
-library(kableExtra)
 library(ggpubr)
 library(data.table)
+library(magick)
+library(kableExtra)
+library(tidyverse)
 ```
 
 ## Content
+1. Introduction\
+\
+2. EDA\
+\
+3. Method\
+\
+4. Results\
+\
+5. Limitations and Conclusion
 
-1.  Introduction and EDA\
-    \
-2.  Hierarchical Bayesian Model\
-    \
-3.  MCMC Algorithm\
-    \
-4.  Results\
-    \
-5.  Discussion and Conclusion\
-    \
 
 ## Introduction
-
 - Hurricanes cause fatalities and property damage
-
-- There is a growing need to accurately predict hurricane behavior, including location and speed
-
+- There is a growing need to accurately predict hurricane behavior, including location and speed (Taboga, 2021)
 - This project aims to forecast wind speeds by modeling hurricane trajectories using a Hierarchical Bayesian Model. 
 
-** Dataset **
+## Data 
 
-- Hurrican703 dataset: 22038 observations $\times$ 8 variables 
-  + 702 hurricanes in the North Atlantic area since 1950
-  
+**ID**: ID of hurricanes
+
+**Year**: In which year the hurricane occurred
+
+**Month**: In which month the hurricane occurred
+
+**Nature**: Nature of the hurricane
+
+- ET: Extra Tropical
+- DS: Disturbance
+- NR: Not Rated
+- SS: Sub Tropical
+- TS: Tropical Storm
+
+**Time**: dates and time of the record
+
+**Latitude** and **Longitude**: The location of a hurricane check point
+
+**Wind.kt**: Maximum wind speed (in Knot) at each check point
+
+
+## Data Pre-processing
+
+- We have filtered observations that occurred on a 6-hour intervals. (e.g., hour 0, 6, 12, 18)
+
+- Calculated the lag difference for latitude, longitude and wind speed. 
+
+- After data cleaning, we obtained 20293 observations and with 699 different hurricanes. 
+
+
 ## EDA-Count of Hurricanes in each Month
 
 ```{r, include = FALSE}
-dt= read.csv("./data/hurrican703.csv")
+dt = read.csv("./data/hurrican703.csv")
+
 dt <- as.data.table(dt)
 summary(dt)
+
+
 dt_long <- dt %>%
     dplyr::group_by(ID) %>% 
     mutate(Wind_prev = lag(Wind.kt, 1),
@@ -75,9 +102,10 @@ dt_long <- dt %>%
 
 
 ```{r}
+
 storms_month_name = distinct(group_by(dt_long, Month, ID), Month)
 
-bx=storms_month_name %>% 
+bx =storms_month_name %>% 
   dplyr::group_by(Month) %>% 
   mutate(Month =  factor(Month, levels = month.name)) %>%  
   ggplot(aes(x = Month)) +
@@ -87,7 +115,6 @@ bx + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ## EDA-Count of Hurricanes in each Year
-
 ```{r}
 storms_season_name = distinct(group_by(dt_long, Season, ID), Season)
 ggplot(data = storms_season_name) + 
@@ -111,7 +138,7 @@ map <- ggplot(dt, aes(x = Longitude, y = Latitude, group = ID)) +
         axis.ticks = element_blank(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
 
-seasonrange <- paste(range(dt[, Season]), collapse=" - ")
+seasonrange <- paste(range(dt[, Season]), collapse =" - ")
 
 
 ```
@@ -131,94 +158,128 @@ The suggested Bayesian model is $Y_{i}(t+6) =\beta_{0,i}+\beta_{1,i}Y_{i}(t) + \
 
 - where $Y_{i}(t)$ the wind speed at time $t$ (i.e. 6 hours earlier),  $\Delta_{i,1}(t)$, $\Delta_{i,2}(t)$ and $\Delta_{i,3}(t)$ are the changes of latitude, longitude and wind speed between $t$ and $t-6$, and $\epsilon_{i,t}$ follows a  normal distributions with mean zero and variance $\sigma^2$, independent across $t$. 
 
-- $\boldsymbol{\beta}_{i} =  (\beta_{0,i},\beta_{1,i},...,\beta_{5,i})$, we assume that $\boldsymbol{\beta}_{i} \sim N(\boldsymbol{\mu}, \boldsymbol{\Sigma})$, where $d$ is dimension of $\boldsymbol{\beta}_{i}$.
+- $\boldsymbol{X}_i = (x_{i,1},x_{i,2},x_{i,3})$ are covariates with fixed
+effect $\gamma$, where $x_{i,1}$ be the month of year when the $i$-th
+hurricane started, $x_{i,2}$ be the calendar year of the $i$ hurricane,
+and $x_{i,3}$ be the type of the $i$-th hurricane.
 
-## Priors
-$$\quad P(\boldsymbol{\mu}) = \frac{1}{\sqrt{2\pi}|\boldsymbol V|^{\frac{1}{2}}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\propto |\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\tag{2}$$
-$$\quad P(\Sigma^{-1}) \propto 
-|\Sigma|^{-\frac{(\nu+d+1)}{2}} \exp(-\frac{1}{2}tr(S\Sigma^{-1}))\tag{3}$$
-$$P(\gamma) \propto exp(-\frac{\gamma^2}{2*(0.05)^2}) =e^{-200\gamma^2}\tag{4}$$
-$$P(\sigma) = \frac{2\alpha}{\pi+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2}\tag{5}$$
+- $\boldsymbol{\beta}_{i} =  (\beta_{0,i},\beta_{1,i},...,\beta_{5,i})$, we assume that $\boldsymbol{\beta}_{i} \sim N(\boldsymbol{\mu}, \boldsymbol{\Sigma})$.
+
+## Prior Distribution
+$$
+\scriptsize{
+\begin{aligned}
+\quad P(\boldsymbol{\mu}) = \frac{1}{\sqrt{2\pi}|\boldsymbol V|^{\frac{1}{2}}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}\propto |\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}
+\end{aligned}
+}
+$$
+\begin{center} 
+where $\boldsymbol{V}$ is a variance-covariance matrix
+\end{center} 
+
+$$
+\scriptsize{
+\begin{aligned}
+\quad P(\Sigma) \propto 
+|\Sigma|^{-\frac{(\nu+d+1)}{2}} \exp(-\frac{1}{2}tr(S\Sigma^{-1}))
+\end{aligned}
+}
+$$
+
+\begin{center} 
+where $d$ is the dimension of $\boldsymbol{\beta}_{i}$.
+\end{center} 
+
+$$
+\scriptsize{
+\begin{aligned}
+P(\gamma) \propto exp(-\frac{\gamma^2}{2*(0.05)^2}) =e^{-200\gamma^2}
+\end{aligned}
+}
+$$
+
+$$
+\scriptsize{
+\begin{aligned}
+P(\sigma) = \frac{2\alpha}{\pi+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2} = \frac{1}{\sigma^2+100}
+\end{aligned}
+}
+$$
 
 ## Posterior
 
 Let $\textbf{B} = (\boldsymbol{\beta}_1^\top,..., \boldsymbol{\beta}_n^\top)^\top$, derive the posterior distribution of the parameters $\Theta = (\textbf{B}^\top, \boldsymbol{\mu}^\top, \sigma^2, \Sigma, \gamma)$.
 \
 \
-Let
-
-$$\boldsymbol{Z}_i(t)\boldsymbol{\beta}_i^\top = \beta_{0,i} + \beta_{1,i}Y_i(t) + \beta_{2,i}\Delta_{i,1}(t) + \beta_{3,i}\Delta_{i,2}(t) + \beta_{4,i}\Delta_{i,3}(t)$$
+Let$\boldsymbol{Z}_i(t)\boldsymbol{\beta}_i^\top = \beta_{0,i} + \beta_{1,i}Y_i(t) + \beta_{2,i}\Delta_{i,1}(t) + \beta_{3,i}\Delta_{i,2}(t) + \beta_{4,i}\Delta_{i,3}(t) + \boldsymbol{X_i}\gamma+\epsilon_{i}(t)$
 We can find that
-$$\boldsymbol{Y_i} {\sim} MVN(\boldsymbol{Z}_i\boldsymbol{\beta}_i, \sigma^2I)\tag{6}$$
-
-The likelihood for our data is
 $$
+\scriptsize{
 \begin{aligned}
-L(\boldsymbol{Y}_i\mid\boldsymbol{B}_i, \sigma^2) = &  \prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\{-\frac{1}{2}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\}\\
-\propto & (\sigma^{-\frac{N}{2}}) \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
+\boldsymbol{Y_i} {\sim} MVN(\boldsymbol{Z}_i\boldsymbol{\beta}_i, \sigma^2I)
 \end{aligned}
-\tag{7}
+}
 $$
 
-## Joint Posrerior
-
+The likelihood for Y is
 $$
+\scriptsize{
 \begin{aligned}
-P(\Theta|Y) = & P(B, \mu, \sigma^2, A, \gamma|Y) \\ 
-&\propto L(Y| B, \sigma^2)L(B|\mu,\Sigma)p(\mu)p(\sigma)p(A)p(\gamma)\\
+&f(Y \mid \boldsymbol B, \boldsymbol \mu, \sigma^2, \boldsymbol \Sigma,\gamma) = \prod_{i = 1}^n f(Y_i | B, \mu, \Sigma, \sigma^2)=\\&\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\{-\frac{1}{2}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\}\\
+&\propto  (2\pi\sigma^2)^{-\frac{n}{2}} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
+\end{aligned}
+}
+$$
+
+## Joint Posterior
+
+$$
+\scriptsize{
+\begin{aligned}
+&\pi(\Theta|Y) =  P(B, \mu, \sigma^2, \Sigma, \gamma|Y)  
+\propto \underbrace{L(Y| B, \sigma^2)}_{\text{likelihood of } \boldsymbol{Y}}\underbrace{L(B|\mu,\Sigma)}_{\text{distribution of }\textbf{B}}\underbrace{p(\mu)p(\sigma)p(\Sigma)p(\gamma)}_{\text{priors}}\\
 &\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \prod_{i=1}^n\exp\big\{-\frac{1}{2}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\sigma^2 I)^{-1}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}\\
-&\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top A(\beta_i-\mu)\} |A|^{\frac{N+d+6}{2}} \exp\{-\frac{1}{2}tr(SA)\}|\boldsymbol V|^{-\frac{1}{2}}\exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\}e^{-200\gamma^2}
+&\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top \Sigma^{-1}(\beta_i-\mu)\} |\Sigma^{-1}|^{\frac{N+d+v+1}{2}} \exp\{-\frac{1}{2}tr(S\Sigma^{-1})\}|\boldsymbol V|^{-\frac{1}{2}}\\
+&\times \exp\{-\frac{1}{2}\boldsymbol\mu^{\top}\boldsymbol V^{-1}\boldsymbol\mu\} \\
+&\times\exp\{-200\gamma^2\}
 \end{aligned}
-\tag{9}
+}
 $$
+where $\boldsymbol{V}$ is a variance-covariance matrix, N is the total number of hurricanes and d is the dimension of $\beta$, and v is the degree of freedom.
 
+## MCMC for Hierarchical Bayesian Model: Method
+**Conditional Distribution of each parameter:**
 
-## Conditional Distributions
+- $\beta_i \sim MVN(N^{-1}M,N^{-1})$, where $N=\frac{Z_i^\top Z_i}{\sigma^2}+\Sigma^{-1}$, $M=\frac{Z_i^\top Y_i-Z_i^\top X_i\gamma}{\sigma^2}+\mu \Sigma^{-1}$
 
-Generate $B_t$ from $f(B_t, \sigma_{t-1},\mu_{t-1},\Sigma_{t-1}^{-1})$
+- $\mu \sim MVN(H^{-1}M, N^{-1})$, where $H=N\Sigma^{-1}-\frac{1}{V}$, $M=\sum_i^n\beta_i\Sigma^{-1}$
 
+- $\boldsymbol{\Sigma} \sim W^{-1}(\boldsymbol{S+\sum_i^n(\beta_i-\mu)(\beta_i-\mu)^\top,n+v})$
+
+- $\gamma \sim MVN(N^{-1}M,N^{-1})$, where $N=\frac{\sum_i^nX_i^\top X_i}{\sigma^2}+400I$, M=$\frac{\sum_i^n(X_i^\top Y_i-X_i^\top Z_i\beta_i)}{\sigma^2}$
+-
 $$
+\scriptsize{
 \begin{aligned}
-f(B^\top|\sigma^2,\mu,\Sigma) \propto \prod_{i=1}^n\exp \{-\frac{(Y_j-Z_j\beta_j-X_j\gamma)^\top(Y_jZ_j\beta_j-X_j\gamma)}{2\sigma^2}-\frac{(\beta_j-\mu)^\top\Sigma^{-1}(\beta_j-\mu)}{2}\}\\
-\propto \prod_{i=1}^n\exp(-\frac{1}{2}(\beta_j^\top(\frac{Z_j^\top Z_j}{\sigma^2}+A)\beta_j-2(\frac{Y_j^\top Z_j-X_j^\top Z_j\gamma}{\sigma^2}+\mu^\top A)\beta_j))\\
-\propto \prod_{i=1}^n\exp\{-\frac{1}{2}(\beta_j-(\frac{Z_j^\top Z_j}{\sigma^2}+A)(\beta_j-(\frac{Z_j^\top Z_j}{\sigma^2}+A)^{-1}(\frac{Y_j^\top Z_j-X_j^\top Z_j\gamma}{\sigma^2}+\mu^\top A)^\top))\}
+\pi(\sigma|\boldsymbol{Y},\textbf{B}^\top, \boldsymbol{\mu}^\top,\boldsymbol{\Sigma},\boldsymbol{\gamma})
+&\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \\
+&\times \prod_{i=1}^n\exp\big\{-\frac{1}{2(\sigma^2 I)}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
 \end{aligned}
-$$
-$MVN_d((\frac{Z_j^\top Z_j}{\sigma^2}+A)^{-1}(\frac{Y_j^\top Z_j^\top-X_j^\top Z_j\gamma}{\sigma^2}+\mu^\top A)^\top,\frac{Z_j^\top Z_j}{\sigma^2}+A)^{-1})$
-
-
-## MCMC Algorithm
-
-$$
-f(\textbf{B} |\boldsymbol{\mu^\top}, \sigma^2, A, \gamma, Y^\top) \sim MVN_d((\frac{Z_j^\top Z_j}{\sigma^2}+A)^{-1}(\frac{Y_j^\top Z_j^\top-X_j^\top Z_j\gamma}{\sigma^2}+\mu^\top A)^\top,\frac{Z_j^\top Z_j}{\sigma^2}+A)^{-1})
+}
 $$
 
-$$
-f(\mu_t|B^\top, \sigma^2, A, \gamma, Y^\top) \sim MVN_d((NA+\frac{1}{v})^{-1}(\sum_i^n\beta_jA)^\top,(NA+\frac{1}{v})^{-1})
-$$
 
-$$
-f(\sigma|B^\top, \mu^\top, A, \gamma, Y^\top)\sim MVN_d((X_i^\top\sigma^{-2}IX_i+400I)^{-1}(X_i^\top\sigma^{-2}IY_i-X_i^\top\sigma^{-2}IZ_i\beta_i),(X_i^\top\sigma^{-2}IX_i+400I)^{-1})
-$$
-
-$$
-f(\boldsymbol{A}|\boldsymbol{B^\top} \sigma^2, \boldsymbol{\gamma, Y^\top}) \sim w^{-1}(\boldsymbol{S+\sum_i^n(\beta_i-\mu)(\beta_i-\mu)^\top,n+v})
-$$
-
-$$
-f(\gamma|B^\top,\mu^top, \sigma^2, A, Y^\top) \sim MVN((\frac{X_j^\top X_j}{\sigma^2}+400I)^{-1}(\sum_i^nY_j^\top X_j-\sum_i^nX_jZ_j\beta_j)^\top,(\frac{X_j^\top X_j}{\sigma^2}+400I)^{-1})
-$$
 
 
 ## MCMC Algorithm - Metropolis-Hastings
 
-* Target distribution is 
+- Target distribution is 
 $$
 \scriptsize{
-\begin{aligned} 
+\begin{aligned}
 \pi(\sigma|\boldsymbol{Y},\textbf{B}^\top, \boldsymbol{\mu}^\top,\boldsymbol{\Sigma},\boldsymbol{\gamma})
-& \propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \\
-& \times \prod_{i=1}^n\exp\big\{-\frac{1}{2(\sigma^2 I)}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
+&\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \\
+&\times \prod_{i=1}^n\exp\big\{-\frac{1}{2(\sigma^2 I)}(\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)^\top (\boldsymbol{Y}_i - \boldsymbol{Z}_i\boldsymbol{\beta}_i-\boldsymbol{X_i}\boldsymbol\gamma_i)\big\}
 \end{aligned}
 }
 $$
@@ -272,68 +333,44 @@ We first fit a Generalize Linear Mixed Models(GLMM) \
 - $\gamma^{(0)}$: Fixed effects from the GLMM\
 
 
-## MCMC Results - Beta Plots 1
+## MCMC Results - Convergence Plots of $\boldsymbol{B}$
 
-- 5000 iterations
+- Trace plots based on 5000 MCMC sample.
 
-- Estimates and inferences based on 5000 MCMC samples
-
-```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
-knitr::include_graphics("plots/beta1.png")
-```
--Trace plots of variance parameters, based on 5000 MCMC sample.
-
-## MCMC Results - Beta Plots 2
-```{r,echo=FALSE,out.width='70%',out.height='70%',fig.align='center'}
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
 knitr::include_graphics("plots/beta2.png")
 ```
--Trace plots of variance parameters, based on 5000 MCMC sample.
 
-## MCMC Results - sigma^2 Plots 1
-```{r}
-library(magick)
 
-pic1 <- image_read("plots/sigma1.png")
-pic2 <- image_read("plots/sigma2.png")
-
-# Combine the pictures side by side
-combined <- image_append(c(pic1, pic2), stack=FALSE)
-
-# Save the combined picture to a file
-image_write(combined, path = "plots/combinedbeta1.jpg")
-
-# Open the combined picture using your system's image viewer
-system("plots/combinedbeta1.jpg")
-```
-
+## Selected $\boldsymbol{B}$: Hurricane GEORGE.1951 
 
 ```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/combinedsigma1.jpg")
+knitr::include_graphics("graph/beta_hurricane GEORGE.1951.png")
 ```
 
-## MCMC Results - sigma^2 Plots 2
-```{r}
-library(magick)
-
-pic3 <- image_read("plots/sigma3.png")
-pic4 <- image_read("plots/sigma4.png")
-
-# Combine the pictures side by side
-combined <- image_append(c(pic3, pic4), stack=FALSE)
-
-# Save the combined picture to a file
-image_write(combined, "plots/combinedsigma2.png")
-```
-
+## MCMC Results - Convergence Plots of $\mu$
 
 ```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/combinedsigma2.png")
+knitr::include_graphics("graph/2.mu.png")
 ```
 
-## MCMC Results - Gamma Plots 1
 
+## MCMC Results - Convergence and Distribution of $\sigma^2$ 
+
+```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
+knitr::include_graphics("graph/3.sigma^2.png")
+```
+
+
+## MCMC Results - Convergece Plots of $\Sigma$ 
+
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
+knitr::include_graphics("plots/sigmainverse2.png")
+```
+
+
+## MCMC Results - Convergece Plots of $\gamma$ 
 ```{r}
-library(magick)
 
 pic5 <- image_read("plots/gamma1.png")
 pic6 <- image_read("plots/gamma2.png")
@@ -349,37 +386,98 @@ image_write(combined, "plots/combinedgamma1.png")
 
 
 ```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/combinedgamma1.png")
-```
-
-## MCMC Results - Gamma Plots 2
-
-```{r}
-library(magick)
-
-pic7 <- image_read("plots/gamma3.png")
-pic8 <- image_read("plots/gamma4.png")
-
-# Combine the pictures side by side
-combined <- image_append(c(pic7, pic8), stack=FALSE)
-
-# Save the combined picture to a file
-image_write(combined, "plots/combinedgamma2.png")
-
-
-```
-
-
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
 knitr::include_graphics("plots/combinedgamma2.png")
 ```
 
-## MCMC Results - Sigma Inverse Plots 1
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/sigmainverse1.png")
+
+## 95% credible intervals of Gamma
+
+|$95\% CI$ | $2.5\%$ | $97.5\%$ |
+|:---:|:---:|:---:|
+| April | $-0.09922543$ | $0.09022636$ |
+| May | $-0.10038368$ | $0.09254019$ |
+| June | $-0.09761796$ | $0.09437084$ |
+| July | $-0.09928455$ | $0.10249011$ |
+| August | $-0.1028288$ | $0.0916931$ |
+| September | $-0.0931095$ | $0.1077383$ |
+| October | $-0.09762039$ | $0.09269326$ |
+| November | $-0.1097137$ | $0.1001810$ |
+| December | $-0.09799494$ | $0.09315765$ |
+| Year | $-0.003099822$ | $-0.001501638$ |
+| TS | $-0.08982878$ | $0.10641711$ |
+| ET | $-0.10332349$ | $0.09418438$ |
+| SS | $-0.09844162$ | $0.09384343$ |
+| NR | $-0.09398186$ | $0.09398186$ |
+
+## Are there seasonal differences in hurricane wind speeds?
+- Summer month: June, July, August.
+- Non-summer month: April, May, September, October, November, December
+
+- $H_0$: $\gamma_{summer} = 0$; vs $H_1$: $\gamma_{summer} \ne 0$
+
+|$95\% CI$ | $2.5\%$ | $97.5\%$ |
+|:---:|:---:|:---:|
+| | $-0.1382282$ | $-0.1369877$ |
+
+- Fail to reject $H_1$. No evidence to support the claim that there are seasonal differences in hurricane wind speeds.
+
+## Are hrricane wind speeds increasing over the years?
+- $H_0$: $\gamma_{10} \le 0$; vs $H_1$: $\gamma_{10} > 0$
+
+|$95\% CI$ | $2.5\%$ | $97.5\%$ |
+|:---:|:---:|:---:|
+| | $-0.003099822$ | $-0.001501638$ |
+
+- Fail to reject $H_1$. No evidence to support the claim that hurricane wind speeds have been increasing over the years.
+
+## Bayesian Model Performance
+-The overall mean RMSE is 6.467.
+
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
+knitr::include_graphics("q4/4.png")
 ```
 
-## MCMC Results - Sigma Inverse Plots 2
-```{r,echo=FALSE,out.width='90%',out.height='100%',fig.align='center'}
-knitr::include_graphics("plots/sigmainverse2.png")
+
+## Bayesian Model Performance
+```{r}
+pic1 <- image_read("q4/1.jpg")
+pic2 <- image_read("q4/2.jpg")
+pic3 <- image_read("q4/3.jpg")
+# Combine the pictures side by side
+combined <- image_append(c(pic1, pic2,pic3), stack=FALSE)
+
+# Save the combined picture to a file
+image_write(combined, path = "q4/combine.png")
+
+# Open the combined picture using your system's image viewer
+system("q4/combine.png")
 ```
+```{r,echo=FALSE,out.width='90%',out.height='80%',fig.align='center'}
+knitr::include_graphics("q4/combine.png")
+```
+\begin{center}                      
+Estimated Wind Speed vs. Predicted Wind Speed
+\end{center}
+
+## Limitations
+-Long running time for MCMC algorithm
+
+-Low performance on hurricanes without enough observations
+
+## Conclusion
+- Our MCMC algorithm successfully estimates the high-dimensional parameters
+
+    + All the parameters converges under a good initial values setting
+    
+    + The overall $R^2$ is relatively large, and the overall RMSE is relatively small, so our model  fits the data well
+
+- There are no discernible variations between the months. The impact of the wind speed from six months ago on the current wind speed may gradually diminish over time. 
+
+- When it comes to foretelling the harm and fatalities brought on by storms, the $\beta_i$ coefficients calculated from the Bayesian model are effective.
+
+## Reference
+Taboga, Marco (2021). "Markov Chain Monte Carlo (MCMC) diagnostics", Lectures on probability theory and mathematical statistics. Kindle Direct Publishing. Online appendix.
+
+## Q&A
+
+Thank you for your attention. Any questions?
