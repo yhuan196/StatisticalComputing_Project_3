@@ -412,7 +412,7 @@ knitr::include_graphics("q4/combine.png")
 
 # Limitation and Discussion 
 
-During model training and testing,although the overall $R^2$ and RMSE are good, but there are still a few negative $R^2$, and a few RMSE values are large, because of the lack of data. In the further study, it's better to use a dataset with the larger size.
+During model training and testing, although the overall $R^2$ and RMSE are good, but there are still a few negative $R^2$, and a few RMSE values are large, because of the lack of data. In the further study, it's better to use a dataset with the larger size.
 
 Furthermore, our goal was to obtain similar results using both MCMC and ordinary linear regression methods. However, we faced some challenges with the limited amount of data for specific hurricanes and highly correlated predictor values within a limited time span. When two or more predictors for a particular hurricane were highly correlated, the determinant of the predictor matrix for that hurricane became zero, indicating that the coefficients were not unique. In such cases, NAs are returned so that it's more difficult to compare the results with the MCMC predictors. 
 
