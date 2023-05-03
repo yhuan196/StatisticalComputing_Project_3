@@ -111,6 +111,7 @@ abline(v = 2500, col = 2, lty = 4)
 \newpage
 ## sigma^2 plot
 ```{r}
+graphics.off()
 burn=1
 chain_length=5000
 # sigmasq
@@ -123,7 +124,8 @@ for (i in burn:chain_length) {
 cur_s %>% acf(xlab = "Lag", ylab = "ACF", main = bquote("Autocorrelation of"~ sigma^2))
 
 ## convergence plot of sigma^2
-cur_s %>% ts.plot(gpars = list(xlab = "iteration", ylab = bquote(""~ sigma^2), main = bquote("Convergence plot of"~ sigma^2)))
+cur_s %>% ts.plot(gpars = list(xlab = "iteration", ylab = bquote(""~ sigma^2), main = bquote(""~ sigma^2)))
+abline(v = 2500, col = 2, lty = 4)
 
 ## histogram of sigma^2
 data.frame(cur_s) %>% ggplot(aes(x = cur_s)) + geom_histogram(bins = 50) + labs(x = bquote(""~ sigma^2), y = "Frequency")
