@@ -44,7 +44,6 @@ library(data.table)
 library(gtsummary)
 ```
 
-
 # Abstract
 
 A hurricane is a tropical storm with winds that have reached a constant speed of 74 miles per hour or more. Developing a model to predict the wind speed of the hurricane can provide early warning and help communities and individuals prepare for severe weather events. In this study we built a Bayesian model and implemented MCMC algorithm to to generate the distribution of corresponding parameters. Most parameters converged well, and the model performed good in predicting the wind speed. Our study also analyzed that there are no significant differences observed between wind speeds in different seasons.   
@@ -78,14 +77,50 @@ Furthermore, we aim to explore seasonal variations in hurricane wind speeds usin
 
 **Wind.kt**: Maximum wind speed (in Knot) at each check point
 
-
 # Background
 
 
 
 # Exploratory Data Analysis
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/fig1-1.png")
+```
+\begin{center}
+Figure 1. the Count of Hurricanes in each Month
+\end{center}
+A bar plot has been used to visualize the number of hurricanes in each month. Based on the information provided in Figure 1, it appears that September has the highest number of hurricanes, while there are no hurricanes in February and March. 
 
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/fig4-1.png")
+```
+\begin{center}
+Figure 2. the Average Speed of Hurriances in each Year
+\end{center}
+The hurricanes in the dataset have been compared based on their different nature ratings. This number of nature ratings is larger than the number of hurricanes due to the fact that some hurricanes may have different nature ratings at different times.
 
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/fig5-1.png")
+```
+\begin{center}
+Figure 3. the Count of Hurricanes in each Nature
+\end{center}
+According to the information provided in Figure 3, it appears that over 50% of the nature ratings are classified as Tropical Storms. Additionally, this nature rating has the highest average wind speed, which is approximately 60 knots.
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/map1.png")
+```
+\begin{center}
+Figure 4. Atlantic Windstorm Mean Knot
+\end{center}
+Figure 4 shows the Atlantic windstorm mean knot, so the windstorm mainly concentrates on the US. 
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/map2.png")
+```
+\begin{center}
+Figure 5. Atlantic Windstorm Trajectories by Months
+\end{center}
+Figure 5 shows the Atlantic windstorm trajectories, so the windstorm mainly occurs in August and September. . 
 
 
 ## Data Pre-processing
@@ -95,7 +130,6 @@ Furthermore, we aim to explore seasonal variations in hurricane wind speeds usin
 - Calculated the lag difference for latitude, longitude and wind speed. 
 
 - After data cleaning, we obtained 20293 observations and with 699 different hurricanes.
-
 
 # Methodology
 
@@ -316,27 +350,25 @@ After defining the Metropolis-Hastings algorithm to generate $\sigma$, we combin
 \end{algorithmic}
 \end{algorithm}
 
-We have tested different start values for MCMC algorithm, the result chain behave similarly. We finally decide to initialize the parameters by using the results from fitting generalized linear mixed model in R. $\boldsymbol B$ is a $5 \times 699$ matrix, $\boldsymbol \mu$ is a $5 \times 1$ matrix, $\sigma$ is a number, $\boldsymbol \Sigma$ is a $5 \times 5$ matrix, and $\boldsymbol \gamma$ is a $14 \times 1$ matrix.
+We have tested different start values for MCMC algorithm, the result chain behave similarly. We finally decide to initialize the parameters by using the results from fitting generalized linear mixed model in R. $\boldsymbol B$ is a 5 * 699 matrix, $\boldsymbol \mu$ is a 5 * 1 matrix, $\sigma$ is a number, $\boldsymbol \Sigma$ is a 5 * 5 matrix, and $\boldsymbol \gamma$ is a 14 * 1 matrix.
 
 
 # Results
 
-## MCMC Convergence Diagnostics
+In Markov Chain Monte Carlo, determining the appropriate number of iterations can depend on many factors such as the complexity of the model, the size of the dataset, etc. Therefore, it is difficult to make a general statement about a specific number of iterations that will be sufficient for all MCMC simulations. In our algorithm, we believe for most of the parameters, 5000 iterations reached the stationary of their posterior distribution. For convergence diagnostics, we generate trace plots, autocorrelation plots, and histograms.
 
-In Markov Chain Monte Carlo, determining the appropriate number of iterations can depend on many factors such as the complexity of the model, the size of the dataset, the convergence rate, etc. Therefore, it is difficult to make a general statement about a specific number of iterations that will be sufficient for all MCMC simulations. In our algorithm, we believe for most of the parameters, 5000 iterations reached the stationary of their posterior distribution. For convergence diagnostics, we generate trace plots. We also randomly choose a Hurricane George 1951 from the data to check its $\beta$ trace plot, autocorrelation, and distribution.
+## Random effect parameter
 
-### Random Effect Parameter $\boldsymbol{B}$, $\boldsymbol\mu$, $\boldsymbol\sigma^2$, $\boldsymbol\Sigma$
+Figure 1 shows convergence plots of $\boldsymbol{B}$. $\beta_1$ takes only a few steps to reach stationary. The trace plot shows the history of our parameter $\beta_1$ across iterations of the chain. This chain appears most likely to converge with an average value of about 0.95. Similarly for $\beta_4$, the chain appears most likely to converge with an average value of about 0.48. $\beta_2$ and $\beta_3$ need to take more iterations to achieve convergence. In Figure 2, we extract Hurricane George 1951 from the data to check its $\beta$ convergence plots and distribution. We can see on trace plot of 5000 iterations for the selected parameter, each of the distributions are relatively normal with some heavy tails in $\beta_0$.
 
-In Figure 1, the first row is the trace plots of $\boldsymbol{B}$, it shows the history of our parameter $\beta_1$ across iterations of the chain. $\beta_1$ takes only a few steps to reach stationary. This chain appears most likely to converge with an average value of about 0.95. Similarly for $\beta_4$, the chain appears most likely to converge with an average value of about 0.48. $\beta_2$ and $\beta_3$ need to take more iterations to achieve convergence. In regression model, the intercept $\beta_0$ represents the expected value of the response variable when all predictor variables are equal to zero. Its convergence is not as informative for diagnosing the convergence of the MCMC algorithm as the convergence of the other coefficients. Similarly, the second row is the trace plots of $\boldsymbol\mu$, all $\mu's$ converge very quickly. $\boldsymbol\Sigma$ is the variance-covariance matrix of $\boldsymbol{B}$, we plot the trace plot of its diagonal, which is the variance of $\boldsymbol{B}$. The result implies, all variance of $\boldsymbol{B}$ converge very quickly, the result suggests that our algorithm has produced reliable estimates of the posterior distribution of the beta coefficients. This is important for making inferences and predictions based on the model.
-
-In Figure 2, we extract Hurricane George 1951 from the data to check its $\beta$ convergence plots and distribution. We can see on trace plot of 5000 iterations for the selected parameter, each of the distributions are relatively normal with some heavy tails in $\beta_0$. In Figure 3, the convergence plot of $\boldsymbol\sigma^2$ suggests that the chain is mixing well and that the algorithm is converging to its posterior distribution of sigma^2. After iteration 500, this chain appears to converge with an average value of 34.5 This also indicates that the estimated values of $\boldsymbol\sigma^2$ are becoming more independent and less influenced by their past values as iterations increase.
+The Convergence plot of $\sigma^2$ suggests that the chain is mixing well and that the algorithm is converging to its posterior distribution of sigma^2. After iteration 500, this chain appears to converge with an average value of 34.5 This also indicates that the estimated values of $\sigma^2$ are becoming more independent and less influenced by their past values as iterations increase.
 
 
 ```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
 knitr::include_graphics("graph/9.convergence_beta_mu_Sigma.png")
 ```
 \begin{center}
-Figure 1 Convergence Plot
+Figure 6
 \end{center}
 
 
@@ -344,25 +376,23 @@ Figure 1 Convergence Plot
 knitr::include_graphics("graph/6.beta_hurricane GEORGE.1951.png")
 ```
 \begin{center}
-Figure 2 The ACF, Convergence, Histogram of $\beta_{HurricaneGeorge1951}$
+Figure 7
 \end{center}
 
 ```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
 knitr::include_graphics("graph/10.convergence_sigma^2.png")
 ```
 \begin{center}
-Figure 3 Trace Plot of $\sigma^2$
+Figure 8
 \end{center}
 
-### Fix Effect Parameter $\boldsymbol\gamma$
-
-The convergence plots of $\boldsymbol\gamma$ shows the majority of $\gamma's$ are stationary base on the trends, except $\gamma_{10}$. To solve this issue, one possible method is to increase the number of iterations or change the year variable to a smaller scale. However, if the year variable have a weak relationship with the response variable, it is difficult to estimate its coefficient accurately, then it is reasonable that $\gamma_{10}$ is not converge in our algorithm. 
+## Fix effect parameter $\gamma$
 
 ```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
 knitr::include_graphics("graph/5.gamma.png")
 ```
 \begin{center}
-Figure 4 Trace Plot of $\gamma$
+Figure 9
 \end{center}
 
 ## Model Performance
@@ -392,7 +422,7 @@ Finally, we excluded some hurricanes from our model due to the limited number of
 
 Our Markov Chain Monte Carlo (MCMC) technique accurately calculates the parameters in high-dimensional settings. Most parameters converge when initialized with good values. Additionally, the model provides a good fit for the data as evidenced by a high overall $R^2$.
 
-Using the posterior estimates of $\mu$, we observe that an increase in the current wind speed and changes in wind speed are linked to an increase in wind speed in the near future. Furthermore, the posterior estimate of $\boldsymbol{\Sigma}$ indicates that the correlations among the $\beta_i$ variables are relatively low.
+Using the posterior estimates of $\mu$, we observe that an increase in the current wind speed and changes in wind speed are linked to an increase in wind speed in the near future. 
 
 During our investigation into how the year, month, and nature of hurricanes impact wind speed, we discovered that there are no significant differences observed between wind speeds in different months and years. Furthermore, we found that the nature of hurricanes does play an important role in wind speed.
 
@@ -411,6 +441,40 @@ Zhang, Z. (2021). A Note on Wishart and Inverse Wishart Priors for Covariance Ma
 
 
 # A First section of Appendix
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/fig1-1.png")
+```
+\begin{center}
+Figure 1. the Count of Hurricanes in each Month
+\end{center}
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/fig4-1.png")
+```
+\begin{center}
+Figure 2. the Average Speed of Hurriances in each Year
+\end{center}
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/fig5-1.png")
+```
+\begin{center}
+Figure 3. the Count of Hurricanes in each Nature
+\end{center}
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/map1.png")
+```
+\begin{center}
+Figure 4. Atlantic Windstorm Mean Knot
+\end{center}
+
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("eda/map2.png")
+```
+\begin{center}
+Figure 5. Atlantic Windstorm Trajectories by Months
+\end{center}
 
 ```{r,echo=FALSE,out.width='90%',out.height='90%',fig.align='center'}
 knitr::include_graphics("eda_files/figure-gfm/fig1-1.png")
