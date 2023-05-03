@@ -64,12 +64,12 @@ where $d$ is dimension of scale matrix $\boldsymbol{S}$, $\nu=5$
 
 3. All the fixed effects $\gamma \sim N(0, 0.05^2)$
 
-$$P(\gamma) \propto exp(-\frac{\gamma^2}{2*(0.05)^2}) =e^{-200\gamma^2}\tag{4}$$
+$$P(\gamma) \propto exp(-\frac{\gamma^2}{2\times(0.05)^2}) =e^{-200\gamma^2}\tag{4}$$
 
 4. $\sigma$: a half-Cauchy distribution with scale parameter 10, reflecting the prior knowledge that the residual variance should be positive and large enough to account for any unexplained variability in the wind speed data.
 
 $$\sigma \sim HC(\alpha=10)$$
-$$P(\sigma) = \frac{2\alpha}{\pi+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2}\tag{5}$$
+$$P(\sigma) = \frac{2\alpha}{\sigma^2+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2}\tag{5}$$
 
 
 \newpage
