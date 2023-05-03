@@ -23,6 +23,8 @@ header-includes:
 - \pagestyle{fancy}
 - \fancyhead[R]{\thepage}
 - \usepackage{amsmath}
+- \usepackage{algpseudocode}
+- \usepackage{algorithm}
 
 --- 
 
@@ -140,8 +142,47 @@ $$
 $$
 where $\boldsymbol{V}$ is a variance-covariance matrix, N is the total number of hurricanes and d is the dimension of $\beta$, and v is the degree of freedom.
 
-## Conditional Posterior Distribution
+### Conditional Posterior Distribution
 
+## MCMC Algorithm
+After deriving the conditional posterior of parameter that we want to estimate, the next step is to apply these conditional posterior to the MCMC Algorithm. Our MCMC algorithm is a hybrid of Metropolis-Hastings and Gibb Sampling. 
+
+### Metropolis-Hastings
+From the conditional posterior of $\sigma$, it is hard to find a closed form distribution for it, unlike other parameters. Here, we apply Metropolis-Hastings to generate new $\sigma$. The detailed steps of Metropolis-Hasting is shown below:
+
+\begin{algorithm}
+\caption{MCMC: Metropolis-Hastings}\label{alg:cap1}
+\begin{algorithmic}
+\Require Target distribution $\pi(\sigma)$
+\For{$i$ = 1 to 1000}
+\State 1. Proposed $\sigma_{proposed} = \sigma^{(i-1)} + (U - 0.5) *2*a$, where $U \sim$ Uniform(0,1), $a$ is step size
+\State 2. Calculate acceptance rate$\alpha_{XY} = \min(0, \frac{\pi(\sigma_{proposed})}{\pi(\sigma^{(i-1)})}$
+\State 3. If $U < \alpha_{XY}$: $\sigma^{(i)} = \sigma_{proposed}$, else $\sigma^{(i)} = \sigma^{(i-1)}$
+\EndFor
+\State $\sigma_{k} = \sum_{i=801}^{1000} \frac{\sigma^{(i)}}{200}$, where $k$ is the iteration of Gibb Sampling
+\end{algorithmic}
+\end{algorithm}
+
+The target distribution is the conditional posterior of $\sigma$. By setting the step size to 0.5, the acceptance rate reaches 43.5%, which is acceptable. The new sigma generated for Gibb Sampling will be the mean of next 200 values in the chain. 
+
+### Gibb Sampling
+After defining the Metropolis-Hastings algorithm to generate $\sigma$, we combine the Metropolis-Hastings with Gibb Sampling. We first initialized the parameters to start the algorithm. The parameters in Gibb Sampling will be updated component-wise. For each parameter to be updated, it always conditioned on the most recent values of other parameters. More precisely, 
+
+\begin{algorithm}
+\caption{MCMC: Gibb Sampling}\label{alg:cap2}
+\begin{algorithmic}
+\Require Initialize $\boldsymbol B, \boldsymbol \mu, \sigma, \boldsymbol \Sigma, \boldsymbol \gamma$
+\For{$k$ = 1 to 5000}
+\State 1. Generate $\boldsymbol \beta_{i}^{k}$ for $i^{th}$ hurricane from $\pi(\textbf{B}|\boldsymbol{Y}, \boldsymbol{\mu}^{k-1},\sigma^{k-1}, \boldsymbol{\Sigma}^{k-1},\boldsymbol{\gamma}^{k-1})$
+\State 2. Generate $\boldsymbol \mu^{k}$ from $\pi(\boldsymbol{\mu}|\boldsymbol{Y}, \textbf{B}^{k},\sigma^{k-1}, \boldsymbol{\Sigma}^{k-1},\boldsymbol{\gamma}^{k-1})$
+\State 3. Generate $\sigma_{k}$ from the Metropolis-Hastings steps
+\State 4. Generate $\boldsymbol \Sigma_{k}$ from $\pi(\boldsymbol{\Sigma}|\boldsymbol{Y}, \textbf{B}_{k},\boldsymbol{\mu}_{k}, \sigma_{k},\boldsymbol{\gamma}_{k-1})$
+\State 5. Generate $\boldsymbol \gamma_{k}$ from $\pi(\boldsymbol{\gamma}|\boldsymbol{Y}, \textbf{B}_{k},\boldsymbol{\mu}_{k},\sigma_{k},\boldsymbol{\Sigma}_{k})$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+We have tested different start values for MCMC algorithm, the result chain behave similarly. We finally decide to initialize the parameters by using the results from fitting generalized linear mixed model in R. $\boldsymbol B$ is a 5 * 699 matrix, $\boldsymbol \mu$ is a 5 * 1 matrix, $\sigma$ is a number, $\boldsymbol \Sigma$ is a 5 * 5 matrix, and $\boldsymbol \gamma$ is a 14 * 1 matrix.
 
 
 # Results
