@@ -1,6 +1,6 @@
 ---
-title: "P8160 - Project 3"
-subtitle: "P8160 Group Project 3 Baysian modeling of hurricane trajectories"
+title: "Hierarchical Baysian Modeling of Hurricane Trajectories"
+subtitle: "P8160 Group Project 3 - Markov chain Monte Carlo"
 institute: Columbia University
 author: "Jingchen Chai, Yi Huang, Zining Qi, Ziyi Wang, Ruihan Zhang"
 date: "`r Sys.Date()`"
@@ -478,7 +478,10 @@ Estimated Wind Speed vs. Predicted Wind Speed
 - When it comes to foretelling the harm and fatalities brought on by storms, the $\beta_i$ coefficients calculated from the Bayesian model are effective.
 
 ## Reference
+
 Taboga, Marco (2021). "Markov Chain Monte Carlo (MCMC) diagnostics", Lectures on probability theory and mathematical statistics. Kindle Direct Publishing. Online appendix.
+
+Polson, N. G., & Scott, J. G. (2012). On the half-Cauchy prior for a global scale parameter.
 
 Zhang, Z. (2021). A Note on Wishart and Inverse Wishart Priors for Covariance Matrix. Journal of Behavioral Data Science, 1(2), 119–126.
 
