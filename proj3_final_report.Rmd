@@ -412,19 +412,17 @@ knitr::include_graphics("q4/combine.png")
 
 # Limitation and Discussion 
 
-During model training and testing, we excluded hurricanes with limited observations. However, this exclusion could impact the results, as the lack of data may be associated with the nature of the hurricanes and affect the damage and financial loss they cause. We recommend further study of these short-term hurricanes.
+During model training and testing,although the overall $R^2$ and RMSE are good, but there are still a few negative $R^2$, and a few RMSE values are large, because of the lack of data. In the further study, it's better to use a dataset with the larger size.
 
-Furthermore, our goal was to obtain similar results using both MCMC and ordinary linear regression methods. However, we faced some challenges with the limited amount of data for specific hurricanes and highly correlated predictor values within a limited time span. When two or more predictors for a particular hurricane were highly correlated, the determinant of the predictor matrix for that hurricane became zero, indicating that the coefficients were not unique. In such cases, the lm function in R returned NA for constant predictors, making it difficult to compare the results with the MCMC predictors.
+Furthermore, our goal was to obtain similar results using both MCMC and ordinary linear regression methods. However, we faced some challenges with the limited amount of data for specific hurricanes and highly correlated predictor values within a limited time span. When two or more predictors for a particular hurricane were highly correlated, the determinant of the predictor matrix for that hurricane became zero, indicating that the coefficients were not unique. In such cases, NAs are returned so that it's more difficult to compare the results with the MCMC predictors. 
 
 Finally, the prior assumption in Bayesian MCMC could have resulted in a bias towards predicting larger and more destructive hurricanes that last for a longer duration. 
 
 # Conclusion
 
-Our Markov Chain Monte Carlo (MCMC) technique accurately calculates the parameters in high-dimensional settings. Most parameters converge when initialized with good values. Additionally, the model provides a good fit for the data as evidenced by a high overall $R^2$.
+Our Markov Chain Monte Carlo (MCMC) technique accurately calculates the parameters in high-dimensional settings. Most parameters converge with 5000 iterations when initialized with good values. Additionally, the model provides a good fit for the data as evidenced by a relatively high overall $R^2$ and a relatively low overall RMSE. Also, the predicted wind speed is highly close to the actual wind speed. 
 
-Using the posterior estimates of $\mu$, we observe that an increase in the current wind speed and changes in wind speed are linked to an increase in wind speed in the near future. 
-
-During our investigation into how the year, month, and nature of hurricanes impact wind speed, we discovered that there are no significant differences observed between wind speeds in different months and years. Furthermore, we found that the nature of hurricanes does play an important role in wind speed.
+During our investigation into how the year, month, and nature of hurricanes impact wind speed, we discovered that there are no significant differences observed between wind speeds in different seasons and years. Furthermore, we found that the nature of hurricanes does play an important role in wind speed, and the most prominent nature is Tropical Storms. 
 
 # References
 
