@@ -416,7 +416,7 @@ During model training and testing, we excluded hurricanes with limited observati
 
 Furthermore, our goal was to obtain similar results using both MCMC and ordinary linear regression methods. However, we faced some challenges with the limited amount of data for specific hurricanes and highly correlated predictor values within a limited time span. When two or more predictors for a particular hurricane were highly correlated, the determinant of the predictor matrix for that hurricane became zero, indicating that the coefficients were not unique. In such cases, the lm function in R returned NA for constant predictors, making it difficult to compare the results with the MCMC predictors.
 
-Finally, we excluded some hurricanes from our model due to the limited number of observations, which may have introduced bias into the model. The systematic exclusion of hurricanes with limited observations could have resulted in a bias towards predicting larger and more destructive hurricanes that last for a longer duration. 
+Finally, the prior assumption in Bayesian MCMC could have resulted in a bias towards predicting larger and more destructive hurricanes that last for a longer duration. 
 
 # Conclusion
 
