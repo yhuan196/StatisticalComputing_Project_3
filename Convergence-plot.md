@@ -1,26 +1,33 @@
----
-title: "MCMC Convergence Plot"
-author: "Yi Huang"
-date: "2023-04-30"
-output: github_document
----
+MCMC Convergence Plot
+================
+Yi Huang
+2023-04-30
 
-```{r setup, include=FALSE}
+## $\beta, \mu, \Sigma$ plot
+
+<img src="Convergence-plot_files/figure-gfm/beta-1.png" style="display: block; margin: auto;" />
+
+## sigma^2 plot
+
+<img src="Convergence-plot_files/figure-gfm/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /><img src="Convergence-plot_files/figure-gfm/unnamed-chunk-4-2.png" style="display: block; margin: auto;" /><img src="Convergence-plot_files/figure-gfm/unnamed-chunk-4-3.png" style="display: block; margin: auto;" />
+
+## Gamma plot
+
+<img src="Convergence-plot_files/figure-gfm/unnamed-chunk-5-1.png" style="display: block; margin: auto;" />
+
+## Extract a hurricane GEORGE.1951
+
+<img src="Convergence-plot_files/figure-gfm/unnamed-chunk-6-1.png" style="display: block; margin: auto;" />
+
+# Appendix: code
+
+``` r
 knitr::opts_chunk$set(echo = FALSE, 
                       message = FALSE, 
                       warning = FALSE, 
                       fig.align = "center")
-```
-
-
-\newpage
-```{r}
 library(dplyr)
 library(tidyverse)
-```
-
-
-```{r}
 ##### plot for 5000 iterations
 plot_df=readRDS("data/new_gibb5000_zn.rds")
 
@@ -29,10 +36,6 @@ testmu = plot_df$mu[[5000]]
 testsigmasq = plot_df$sigmasq[[5000]]
 testSIGMA = plot_df$SIGMA[[5000]]
 testgamma=plot_df$gamma[[5000]]
-```
-
-
-```{r}
 #### plot preparation
 beta.res.plot <- NULL
 for (i in 1:5000) {
@@ -55,11 +58,6 @@ for (i in 1:5000) {
   sigma.res = as.data.frame(sigma.res)
   sigma.res.plot = rbind(sigma.res.plot, sigma.res)
 }
-```
-
-
-## $\beta, \mu, \Sigma$ plot
-```{r beta}
 #### beta plot
 par(mfrow = c(3, 5))
 plot(beta.res.plot[,1],type = "l", main = bquote("Trace plot of "~ beta[0]), xlab = "iteration", ylab = bquote(beta[0]))
@@ -105,12 +103,6 @@ plot(Sigma_inv.res.plot[,4],type = "l", main = bquote("Trace plot of "~ Sigma[4]
 abline(v = 2500, col = 2, lty = 4)
 plot(Sigma_inv.res.plot[,5],type = "l", main = bquote("Trace plot of "~ Sigma[5]), xlab = "iteration", ylab = bquote(Sigma[5]))
 abline(v = 2500, col = 2, lty = 4)
-```
-
-
-\newpage
-## sigma^2 plot
-```{r}
 burn=1
 chain_length=5000
 # sigmasq
@@ -128,15 +120,6 @@ cur_s %>% ts.plot(gpars = list(xlab = "iteration", ylab = bquote(""~ sigma^2), m
 ## histogram of sigma^2
 data.frame(cur_s) %>% ggplot(aes(x = cur_s)) + geom_histogram(bins = 50) + labs(x = bquote(""~ sigma^2), y = "Frequency")
 
-```
-
-
-
-
-\newpage
-## Gamma plot
-
-```{r}
 gamma.res.plot <- data.frame(matrix(nrow = 14, ncol = 5000))
 
 for (i in 1:5000) {
@@ -162,12 +145,6 @@ plot(gamma.res.plot[,11],type = "l", main = bquote("Trace plot of "~ gamma[11]),
 plot(gamma.res.plot[,11],type = "l", main = bquote("Trace plot of "~ gamma[12]), xlab = "iteration", ylab = bquote(gamma[12]))
 plot(gamma.res.plot[,13],type = "l", main = bquote("Trace plot of "~ gamma[13]), xlab = "iteration", ylab = bquote(gamma[13]))
 plot(gamma.res.plot[,14],type = "l", main = bquote("Trace plot of "~ gamma[14]), xlab = "iteration", ylab = bquote(gamma[14]))
-```
-
-
-## Extract a hurricane GEORGE.1951
-
-```{r}
 chain_length = 5000
 split_res <- list()
 cur_start <- 1
@@ -252,12 +229,4 @@ hist(unlist(cur_B[4]), main = "", breaks = 25, xlab = expression(beta[3]))
 hist(unlist(cur_B[5]), main = "", breaks = 30, xlab = expression(beta[4]))
 
 graphics.off()
-```
-
-
-
-
-\newpage
-# Appendix: code
-```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 ```
