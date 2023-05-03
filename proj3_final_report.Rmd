@@ -342,7 +342,7 @@ knitr::include_graphics("graph/6.beta_hurricane GEORGE.1951.png")
 Figure 2
 \end{center}
 
-```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
 knitr::include_graphics("graph/10.convergence_sigma^2.png")
 ```
 \begin{center}
