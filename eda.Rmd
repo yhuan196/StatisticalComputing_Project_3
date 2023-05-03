@@ -41,7 +41,7 @@ storms_month_name = distinct(group_by(dt_long, Month, ID), Month)
 storms_month_name %>% 
   dplyr::group_by(Month) %>% 
   mutate(Month =  factor(Month, levels = month.name)) %>%  
-  ggplot(aes(x = Month, fill = Month)) +
+  ggplot(aes(x = Month)) +
   geom_bar()
 ```
 \begin{center}
