@@ -39,6 +39,7 @@ library(ggplot2)
 
 # Abstract
 
+A hurricane is a tropical storm with winds that have reached a constant speed of 74 miles per hour or more. Developing a model to predict the wind speed of the hurricane can provide early warning and help communities and individuals prepare for severe weather events. In this study we built a Bayesian model and implemented MCMC algorithm to to generate the distribution of corresponding parameters. Most parameters converged well, and the model performed good in predicting the wind speed. Our study also analyzed that there are no significant differences observed between wind speeds in different seasons.   
 
 
 # Introduction
