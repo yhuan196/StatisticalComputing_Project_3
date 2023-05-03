@@ -35,6 +35,9 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, results = '
 \newpage
 ```{r,include=FALSE}
 library(ggplot2)
+library(tidyverse)
+library(data.table)
+library(gtsummary)
 ```
 
 # Abstract
@@ -75,6 +78,143 @@ Furthermore, we aim to explore seasonal variations in hurricane wind speeds usin
 
 
 # Exploratory Data Analysis
+```{r}
+dt <- read.csv("data/hurrican703.csv")
+dt <- as.data.table(dt)
+summary(dt)
+
+
+dt_long <- dt %>%
+    dplyr::group_by(ID) %>% 
+    mutate(Wind_prev = lag(Wind.kt, 1),
+           Lat_change = Latitude - lag(Latitude, 1),
+           Long_change = Longitude - lag(Longitude, 1),
+           Wind_prev_prev = lag(Wind.kt, 2)) %>% 
+    mutate(Wind_change = Wind_prev - Wind_prev_prev)
+```
+
+
+```{r, echo=FALSE, fig1, fig.height=4, fig.width=7}
+storms_month_name = distinct(group_by(dt_long, Month, ID), Month)
+
+storms_month_name %>% 
+  dplyr::group_by(Month) %>% 
+  mutate(Month =  factor(Month, levels = month.name)) %>%  
+  ggplot(aes(x = Month, fill = Month)) +
+  geom_bar()
+```
+\begin{center}
+Figure 1. the Count of Hurricanes in Each Month
+\end{center}
+
+
+```{r, echo=FALSE, fig2, fig.height=4, fig.width=7}
+dt_long %>% 
+  dplyr::group_by(Month) %>% 
+  mutate(avg_speed = mean(Wind.kt)) %>% 
+  distinct(Month, avg_speed) %>% 
+  mutate(Month =  factor(Month, levels = month.name))%>% 
+  ggplot(aes(x = Month, y = avg_speed)) +
+  geom_point() +
+  scale_y_continuous("Average Speed")
+```
+\begin{center}
+Figure 2.the Average Speed of Hurricanes in Each Month
+\end{center}
+
+
+
+```{r, echo=FALSE, fig3, fig.height=3.8, fig.width=7}
+storms_season_name = distinct(group_by(dt_long, Season, ID), Season)
+ggplot(data = storms_season_name) + 
+  geom_bar(aes(x = Season,fill=Season)) +
+  scale_x_continuous("Year")
+```
+\begin{center}
+Figure 3. Count of Hurricanes in Each Year
+\end{center}
+```{r, echo=FALSE, fig4, fig.height=3.8, fig.width=7}
+dt_long %>% 
+  dplyr::group_by(Season) %>% 
+  mutate(avg_speed = mean(Wind.kt)) %>% 
+  distinct(Season, avg_speed) %>% 
+  ggplot(aes(x = Season, y = avg_speed)) +
+  geom_point() +
+  geom_smooth(method = "loess") +
+  scale_y_continuous("Average Speed") +
+  scale_x_continuous("Year") 
+```
+\begin{center}
+Figure 4.the Average Speed of Hurricanes in Each Year
+\end{center}
+
+```{r, echo=FALSE, fig5, fig.height=3.8, fig.width=7}
+storms_nature_name = distinct(group_by(dt_long, Nature, ID), Nature)
+ggplot(data = storms_nature_name) + 
+  geom_bar(aes(x = Nature,fill=Nature))
+```
+\begin{center}
+Figure 5. the Count of Hurricanes in Each Nature
+\end{center}
+
+```{r, echo=FALSE, fig6, fig.height=3.8, fig.width=7}
+dt_long %>% 
+  dplyr::group_by(Nature) %>% 
+  mutate(avg_speed = mean(Wind.kt)) %>% 
+  distinct(Nature, avg_speed) %>% 
+  ggplot(aes(x = Nature, y = avg_speed)) +
+  geom_point() +
+  scale_y_continuous("Average Speed ")
+```
+\begin{center}
+Figure 6. the Average Speed of Hurricanes in Each Nature
+\end{center}
+
+```{r}
+ggplot(data=dt, aes(x = Longitude, y = Latitude)) + 
+  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE)
+library(data.table)
+dt <- as.data.table(dt)
+summary(dt)
+```
+
+```{r}
+library(maps)
+map <- ggplot(data = dt, aes(x = Longitude, y = Latitude)) + 
+  geom_polygon(data = map_data(map = 'world'), aes(x = long, y = lat, group = group))
+map +
+  stat_summary_2d(data = dt, aes(x = Longitude, y = Latitude, z = dt$Wind.kt), fun = median, binwidth = c(1, 1), show.legend = TRUE, alpha = 0.75) + 
+  ggtitle(paste0("Atlantic Windstorm mean knot"))
+```
+
+
+```{r}
+map <- ggplot(dt, aes(x = Longitude, y = Latitude, group = ID)) + 
+  geom_polygon(data = map_data("world"), 
+               aes(x = long, y = lat, group = group), 
+               fill = "gray25", colour = "gray10", size = 0.2) + 
+  geom_path(data = dt, aes(group = ID, colour = Wind.kt), size = 0.5) + 
+  xlim(-138, -20) + ylim(3, 55) + 
+  labs(x = "", y = "", colour = "Wind \n(knots)") + 
+  theme(panel.background = element_rect(fill = "gray10", colour = "gray30"),
+        axis.text.x = element_blank(), axis.text.y = element_blank(), 
+        axis.ticks = element_blank(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+seasonrange <- paste(range(dt[, Season]), collapse=" - ")
+
+map + ggtitle(paste("Atlantic named Windstorm Trajectories (", 
+                     seasonrange, ")\n")) 
+```
+
+
+```{r}
+mapMonth <- map + facet_wrap(~ Month) +
+  ggtitle(paste("Atlantic named Windstorm Trajectories by Month (", 
+                 seasonrange, ")\n")) 
+mapMonth
+```
+
 
 ## Data Pre-processing
 
@@ -336,8 +476,19 @@ Figure 2
 ## Fix effect parameter $\gamma$
 
 
+## Model Performance
+To assess how well the model predicts hurricane wind speeds, we calculate the RMSE and $R^2$ values for each hurricane, using the residuals of Bayesian estimates that have converged after iterations from MCMC to predict wind speeds for a test dataset. The overall RMSE is 6.647. We filtered the valid $R^2$ values between 0 and 1 and find that most of the hurricanes have positive $R^2$ values, indicating that the model performs well for most hurricanes. However, a few of the estimated Bayesian models have negative $R^2$ values, which may be due to the limited number of observations of hurricanes. Table 3 displays the 20 hurricanes chosen randomly. These hurricanes indicate that the estimated model accurately predicts wind speeds for most hurricanes. 
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("q4/4.png")
+```
+\begin{center}
+Table1. R-squared values and RMSE for prediction results on test data
+\end{center}
 
-
+Figure 3 displays the actual wind speed and the estimated wind speed for a random selection of three hurricanes. It seems that there is a relatively high degree of overlap between the two curves for most parts, indicating that most of the predicted wind speeds are in close agreement with the actual wind speeds. For the hurricane Alex.2010, the RMSE is 8.879. For the hurricane Zeta.2005, the RMSE is 3.46. For the hurricane Richard.2010, the RMSE is 6.085456.
+```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+knitr::include_graphics("q4/combine.png")
+```
 # Limitation and Discussion 
 
 During model training and testing, we excluded hurricanes with limited observations. However, this exclusion could impact the results, as the lack of data may be associated with the nature of the hurricanes and affect the damage and financial loss they cause. We recommend further study of these short-term hurricanes.
