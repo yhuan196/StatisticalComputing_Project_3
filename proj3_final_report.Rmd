@@ -195,10 +195,10 @@ $$
 
 ### Joint Posterior Distribution
 
-Let $B = ({\beta}_1^\top,..., {\beta}_n^\top)^\top$, derive the posterior distribution of the parameters $\Theta = ({B}^\top, {\mu}^\top, \sigma^2, \Sigma, \gamma)$.
+Let $B = ({\beta}_1^\top,..., {\beta}_n^\top)^\top$, derive the posterior distribution of the parameters $\Theta = ({B}^\top, {\mu}^\top, \sigma^2, \Sigma, \gamma^\top)$.
 \
 \
-Let ${Z}_i(t){\beta}_i^\top = \beta_{0,i} + \beta_{1,i}Y_i(t) + \beta_{2,i}\Delta_{i,1}(t) + \beta_{3,i}\Delta_{i,2}(t) + \beta_{4,i}\Delta_{i,3}(t) + \epsilon_{i}(t)$
+Let ${Z}_i(t){\beta}_i^\top = \beta_{0,i} + \beta_{1,i}Y_i(t) + \beta_{2,i}\Delta_{i,1}(t) + \beta_{3,i}\Delta_{i,2}(t) + \beta_{4,i}\Delta_{i,3}(t)$
 
 Where ${Z_i}$ is the $n_{i}$*d covariate matrix for hurricane i. 
 
