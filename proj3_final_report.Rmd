@@ -256,7 +256,7 @@ Let $A$= $\Sigma^{-1}$
 
 $$
 \begin{aligned}
-\pi(\textbf{B} | {Y}, {\mu}^\top, \sigma, {\Sigma}) 
+\pi(B | {Y}, {\mu}^\top, \sigma, {\Sigma}) 
 &\propto  \prod_{i=1}^n\exp\big\{-\frac{1}{2}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)^\top (\sigma^2 I)^{-1}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\big\}\\
 &\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top \Sigma^{-1}(\beta_i-\mu)\}\\
 &\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma_i)^\top (\sigma^2 I)^{-1}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\big\}+(\beta_i-\mu)^\top A(\beta_i-\mu)\}\\
