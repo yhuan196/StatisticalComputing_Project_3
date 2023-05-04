@@ -125,9 +125,9 @@ Figure 5 shows the Atlantic windstorm trajectories, so the windstorm mainly occu
 
 ## Data Pre-processing
 
-- We have filtered observations that occurred on a 6-hour intervals. (e.g., hour 0, 6, 12, 18)
+- Filtered observations that occurred on a 6-hour intervals. (e.g., hour 0, 6, 12, 18)
 
-- Calculated the lag difference for latitude, longitude and wind speed. 
+- Created 3 new variables including the changes of latitude and longitude, as well as the wind speed between the time t and $t-6$ 
 
 - After data cleaning, we obtained 20293 observations and with 699 different hurricanes.
 
