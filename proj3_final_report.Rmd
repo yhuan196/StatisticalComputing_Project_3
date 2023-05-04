@@ -192,6 +192,7 @@ P(\sigma) = \frac{2\alpha}{\sigma^2+\alpha^2} \propto \frac{1}{\sigma^2+\alpha^2
 \end{aligned}
 $$
 
+
 ### Joint Posterior Distribution
 
 Let $B = ({\beta}_1^\top,..., {\beta}_n^\top)^\top$, derive the posterior distribution of the parameters $\Theta = (\textbf{B}^\top, {\mu}^\top, \sigma^2, \Sigma, \gamma)$.
@@ -207,6 +208,8 @@ $$
 {Y_i} {\sim} MVN({Z}_i{\beta}_i^{T}, \sigma^2I)
 \end{aligned}
 $$
+
+\newpage
 The likelihood for Y is:
 
 $$
@@ -246,6 +249,7 @@ $$
 \end{aligned}
 $$
 
+\newpage
 ### Conditional Posterior Distribution
 
 1. The posterior distribution of ${B}$
@@ -289,6 +293,9 @@ $$
 
 
 $${\Sigma} \sim w^{-1}({ S+\sum_i^N(\beta_i-\mu)(\beta_i-\mu)^\top,N+v})$$
+
+\newpage
+
 4. The posterior distribution of $\gamma$ 
 
 $$
@@ -355,44 +362,48 @@ We have tested different start values for MCMC algorithm, the result chain behav
 
 # Results
 
-In Markov Chain Monte Carlo, determining the appropriate number of iterations can depend on many factors such as the complexity of the model, the size of the dataset, etc. Therefore, it is difficult to make a general statement about a specific number of iterations that will be sufficient for all MCMC simulations. In our algorithm, we believe for most of the parameters, 5000 iterations reached the stationary of their posterior distribution. For convergence diagnostics, we generate trace plots, autocorrelation plots, and histograms.
+## MCMC Convergence Diagnostics
 
-## Random effect parameter
+In Markov Chain Monte Carlo, determining the appropriate number of iterations can depend on many factors such as the complexity of the model, the size of the dataset, the convergence rate, etc. Therefore, it is difficult to make a general statement about a specific number of iterations that will be sufficient for all MCMC simulations. In our algorithm, we believe for most of the parameters, 5000 iterations reached the stationary of their posterior distribution. For convergence diagnostics, we generate trace plots. We also randomly choose a Hurricane George 1951 from the data to check its $\beta$ trace plot, autocorrelation, and distribution.
 
-Figure 6 shows convergence plots of $\boldsymbol{B}$. $\beta_1$ takes only a few steps to reach stationary. The trace plot shows the history of our parameter $\beta_1$ across iterations of the chain. This chain appears most likely to converge with an average value of about 0.95. Similarly for $\beta_4$, the chain appears most likely to converge with an average value of about 0.48. $\beta_2$ and $\beta_3$ need to take more iterations to achieve convergence. In Figure 7, we extract Hurricane George 1951 from the data to check its $\beta$ convergence plots and distribution. We can see on trace plot of 5000 iterations for the selected parameter, each of the distributions are relatively normal with some heavy tails in $\beta_0$.
+### Random Effect Parameter $\boldsymbol{B}$, $\boldsymbol\mu$, $\boldsymbol\sigma^2$, $\boldsymbol\Sigma$
 
-The Convergence plot of $\sigma^2$ suggests that the chain is mixing well and that the algorithm is converging to its posterior distribution of sigma^2. After iteration 500, this chain appears to converge with an average value of 34.5 This also indicates that the estimated values of $\sigma^2$ are becoming more independent and less influenced by their past values as iterations increase.
+In Figure 6, the first row is the trace plots of $\boldsymbol{B}$, it shows the history of our parameter $\beta_1$ across iterations of the chain. $\beta_1$ takes only a few steps to reach stationary. This chain appears most likely to converge with an average value of about 0.95. Similarly for $\beta_4$, the chain appears most likely to converge with an average value of about 0.48. $\beta_2$ and $\beta_3$ need to take more iterations to achieve convergence. In regression model, the intercept $\beta_0$ represents the expected value of the response variable when all predictor variables are equal to zero. Its convergence is not as informative for diagnosing the convergence of the MCMC algorithm as the convergence of the other coefficients. Similarly, the second row is the trace plots of $\boldsymbol\mu$, all $\mu's$ converge very quickly. $\boldsymbol\Sigma$ is the variance-covariance matrix of $\boldsymbol{B}$, we plot the trace plot of its diagonal, which is the variance of $\boldsymbol{B}$. The result implies, all variance of $\boldsymbol{B}$ converge very quickly, the result suggests that our algorithm has produced reliable estimates of the posterior distribution of the beta coefficients. This is important for making inferences and predictions based on the model.
+
+In Figure 7, we extract Hurricane George 1951 from the data to check its $\beta$ convergence plots and distribution. We can see on trace plot of 5000 iterations for the selected parameter, each of the distributions are relatively normal with some heavy tails in $\beta_0$. In Figure 8, the convergence plot of $\boldsymbol\sigma^2$ suggests that the chain is mixing well and that the algorithm is converging to its posterior distribution of sigma^2. After iteration 500, this chain appears to converge with an average value of 34.5 This also indicates that the estimated values of $\boldsymbol\sigma^2$ are becoming more independent and less influenced by their past values as iterations increase.
 
 
-```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+```{r,echo=FALSE,out.width='80%',out.height='90%',fig.align='center'}
 knitr::include_graphics("graph/9.convergence_beta_mu_Sigma.png")
 ```
 \begin{center}
-Figure 6
+Figure 6 Convergence Plot
 \end{center}
 
 
-```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+```{r,echo=FALSE,out.width='80%',out.height='80%',fig.align='center'}
 knitr::include_graphics("graph/6.beta_hurricane GEORGE.1951.png")
 ```
 \begin{center}
-Figure 7
+Figure 7 The ACF, Convergence, Histogram of $\beta_{HurricaneGeorge1951}$
 \end{center}
 
-```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
+```{r,echo=FALSE,out.width='80%',out.height='80%',fig.align='center'}
 knitr::include_graphics("graph/10.convergence_sigma^2.png")
 ```
 \begin{center}
-Figure 8
+Figure 8 Trace Plot of $\sigma^2$
 \end{center}
 
-## Fix effect parameter $\gamma$
+### Fix Effect Parameter $\boldsymbol\gamma$
 
-```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+The trace plots of $\boldsymbol\gamma$ shows the majority of $\gamma's$ are stationary base on the trends, except $\gamma_{10}$. To solve this issue, one possible method is to increase the number of iterations or change the year variable to a smaller scale. However, if the year variable have a weak relationship with the response variable, it is difficult to estimate its coefficient accurately, then it is reasonable that $\gamma_{10}$ is not converge in our algorithm. 
+
+```{r,echo=FALSE,out.width='80%',out.height='80%',fig.align='center'}
 knitr::include_graphics("graph/5.gamma.png")
 ```
 \begin{center}
-Figure 9
+Figure 9 Trace Plot of $\gamma$
 \end{center}
 
 ## Model Performance
@@ -406,7 +417,7 @@ Table1. R-squared values and RMSE for prediction results on test data
 \end{center}
 
 Figure 10 displays the actual wind speed and the estimated wind speed for a random selection of three hurricanes. It seems that there is a relatively high degree of overlap between the two curves for most parts, indicating that most of the predicted wind speeds are in close agreement with the actual wind speeds. For the hurricane Alex.2010, the RMSE is 8.879. For the hurricane Zeta.2005, the RMSE is 3.46. For the hurricane Richard.2010, the RMSE is 6.085456.
-```{r,echo=FALSE,out.width='100%',out.height='100%',fig.align='center'}
+```{r,echo=FALSE,out.width='90%',out.height='90%',fig.align='center'}
 knitr::include_graphics("q4/combine.png")
 ```
 \begin{center}
