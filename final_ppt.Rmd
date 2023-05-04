@@ -419,7 +419,7 @@ knitr::include_graphics("plots/combinedgamma2.png")
 
 |$95\% CI$ | $2.5\%$ | $97.5\%$ |
 |:---:|:---:|:---:|
-| | $-0.1382282$ | $-0.1369877$ |
+| | $-0.05845757$ | $0.06854177$ |
 
 - Fail to reject $H_1$. No evidence to support the claim that there are seasonal differences in hurricane wind speeds.
 

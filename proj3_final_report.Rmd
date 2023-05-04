@@ -394,7 +394,8 @@ knitr::include_graphics("graph/10.convergence_sigma^2.png")
 Figure 8 Trace Plot of $\sigma^2$
 \end{center}
 
-### Fix Effect Parameter $\boldsymbol\gamma$
+## Analysis of the Fix Effect $\boldsymbol\gamma$
+### MCMC convergence
 
 The trace plots of $\boldsymbol\gamma$ shows the majority of $\gamma's$ are stationary base on the trends, except $\gamma_{10}$. To solve this issue, one possible method is to increase the number of iterations or change the year variable to a smaller scale. However, if the year variable have a weak relationship with the response variable, it is difficult to estimate its coefficient accurately, then it is reasonable that $\gamma_{10}$ is not converge in our algorithm. 
 
@@ -405,7 +406,47 @@ knitr::include_graphics("graph/5.gamma.png")
 Figure 9 Trace Plot of $\gamma$
 \end{center}
 
-## Model Performance
+### 95% credible intervals of Gamma
+
+|$95\% CI$ | $2.5\%$ | $97.5\%$ |
+|:---:|:---:|:---:|
+| April | $-0.09922543$ | $0.09022636$ |
+| May | $-0.10038368$ | $0.09254019$ |
+| June | $-0.09761796$ | $0.09437084$ |
+| July | $-0.09928455$ | $0.10249011$ |
+| August | $-0.1028288$ | $0.0916931$ |
+| September | $-0.0931095$ | $0.1077383$ |
+| October | $-0.09762039$ | $0.09269326$ |
+| November | $-0.1097137$ | $0.1001810$ |
+| December | $-0.09799494$ | $0.09315765$ |
+| Year | $-0.003099822$ | $-0.001501638$ |
+| TS | $-0.08982878$ | $0.10641711$ |
+| ET | $-0.10332349$ | $0.09418438$ |
+| SS | $-0.09844162$ | $0.09384343$ |
+| NR | $-0.09398186$ | $0.09398186$ |
+
+### Seasonal differences in hurricane wind speeds
+- Summer season: July, August, September, October
+- Non-summer season: April, May, June, November, December
+
+- $H_0$: $\gamma_{summer} = 0$; vs $H_1$: $\gamma_{summer} \ne 0$
+
+|$95\% CI$ | $2.5\%$ | $97.5\%$ |
+|:---:|:---:|:---:|
+| | $-0.05845757$ | $0.06854177$ |
+
+The 95% credible interval for calculated gamma associated with Summer season contains 0, thus fail to reject $H_1$. No evidence to support the claim that there are seasonal differences in hurricane wind speeds.
+
+### Hurricane wind speeds increasing over the years
+- $H_0$: $\gamma_{10} \le 0$; vs $H_1$: $\gamma_{10} > 0$
+
+|$95\% CI$ | $2.5\%$ | $97.5\%$ |
+|:---:|:---:|:---:|
+| | $-0.003099822$ | $-0.001501638$ |
+
+The gamma associated with type (Nature of the hurricane) is smaller than 0, thus fail to reject $H_1$. No evidence to support the claim that hurricane wind speeds have been increasing over the years.
+
+## Model Prediction Performance
 
 To assess how well the model predicts hurricane wind speeds, we calculate the RMSE and $R^2$ values for each hurricane, using the residuals of Bayesian estimates that have converged after iterations from MCMC to predict wind speeds for a test dataset. The overall RMSE is 6.647. We filtered the valid $R^2$ values between 0 and 1 and find that most of the hurricanes have positive $R^2$ values, indicating that the model performs well for most hurricanes. However, a few of the estimated Bayesian models have negative $R^2$ values, which may be due to the limited number of observations of hurricanes. Table 1 displays the 20 hurricanes chosen randomly. These hurricanes indicate that the estimated model accurately predicts wind speeds for most hurricanes. 
 ```{r,echo=FALSE,out.width='40%',out.height='40%',fig.align='center'}

@@ -58,7 +58,9 @@ df_month <- df_gama2 %>%
   select(-season, -TS, -ET, -SS, -NR) %>%
   gather(key = "month", value = "value", -id)
 head(df_month)
+```
 
+```{r, eval=FALSE}
 ggplot(df_month, aes(x = id, y = value)) + 
   geom_line(aes(color = month, linetype = month)) 
 #+ scale_color_manual(values = c("darkred", "steelblue", "red"))
@@ -71,7 +73,9 @@ df_year <- df_gama2 %>%
   select(id, season) %>%
   gather(key = "name", value = "year", -id)
 head(df_year)
+```
 
+```{r, eval=FALSE}
 ggplot(data = df_year, aes(x = id, y = year)) +
   geom_line()
 ```
@@ -79,12 +83,15 @@ ggplot(data = df_year, aes(x = id, y = year)) +
 ## plot type
 
 ```{r}
-#theme_set(theme_minimal())
 df_type <- df_gama2 %>%
   select(id, TS, ET, SS, NR) %>%
   gather(key = "type", value = "value", -id)
 head(df_type)
+```
 
+
+```{r, eval=FALSE}
+#theme_set(theme_minimal())
 ggplot(df_type, aes(x = id, y = value)) + 
   geom_line(aes(color = type, linetype = type)) 
 #+ scale_color_manual(values = c("darkred", "steelblue", "red"))
