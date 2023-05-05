@@ -46,16 +46,19 @@ library(gtsummary)
 
 # Abstract
 
-A hurricane is a tropical storm with winds that have reached a constant speed of 74 miles per hour or more. Developing a model to predict the wind speed of the hurricane can provide early warning and help communities and individuals prepare for severe weather events. In this study we built a Bayesian model and implemented MCMC algorithm to to generate the distribution of corresponding parameters. Most parameters converged well, and the model performed good in predicting the wind speed. Our study also analyzed that there are no significant differences observed between wind speeds in different seasons.   
+A hurricane is a tropical storm with winds that have reached a constant speed of 74 miles per hour or more. Developing a model to predict the wind speed of the hurricane can provide early warning and help communities and individuals prepare for severe weather events. In this study we built a Bayesian model and implemented MCMC algorithm to to generate the distribution of corresponding parameters. Most parameters converged well, and the model performed good in predicting the wind speed. Our study also analyzed that there are no statistical significant differences in the seasonal difference in hurricane wind speeds, and there is no evidence to support the claim that hurricane wind speeds have been increasing over the years.
 
 
 # Introduction
 
-The United States faces significant social and economic risks from hurricanes, which cause fatalities and property damage through high winds, heavy rain, and storm surges(Blendon et al, 2007). To address this, there is a growing need to accurately predict hurricane behavior, including location and speed. This project aims to forecast wind speeds by modeling hurricane trajectories using a Hierarchical Bayesian Model. The hurricane data includes specific effects unique to each hurricane, and model integration is achieved through the use of a Markov Chain Monte Carlo algorithm.
+The United States faces significant social and economic risks from hurricanes, which cause fatalities and property damage through high winds, heavy rain, and storm surges (Blendon et al, 2007). To address this, there is a growing need to accurately predict hurricane behavior, including location and speed. This project aims to forecast wind speeds by modeling hurricane trajectories using a Hierarchical Bayesian Model. The hurricane data includes specific effects unique to each hurricane, and model integration is achieved through the use of a Markov Chain Monte Carlo algorithm. Through this model, we intend to identify the key factors that influence hurricanes and draw meaningful conclusions based on the results.
 
-Furthermore, we aim to explore seasonal variations in hurricane wind speeds using the Bayesian model previously estimated, and investigate whether there is evidence of increasing wind speeds over time. Additionally, we plan to utilize data on hurricane damages and fatalities in the United States to develop a prediction model. Through this model, we intend to identify the key factors that influence hurricanes and draw meaningful conclusions based on the results.
+Additionally, we aim to explore seasonal variations in hurricane wind speeds and investigate whether there is evidence of increasing wind speeds over time. Furthermore, we utilized our estimated model parameters and covariate values to develop a prediction model for tracking each hurricane's wind speeds at each time point. Prediction performance is compared with the actual wind speeds recorded during the hurricane.
 
-## Data
+
+# Study Data
+
+## Variable List
 
 **ID**: ID of hurricanes
 
@@ -77,16 +80,13 @@ Furthermore, we aim to explore seasonal variations in hurricane wind speeds usin
 
 **Wind.kt**: Maximum wind speed (in Knot) at each check point
 
-# Background
+## Exploratory Data Analysis
 
-
-
-# Exploratory Data Analysis
 ```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
 knitr::include_graphics("eda/fig1-1.png")
 ```
 \begin{center}
-Figure 1. the Count of Hurricanes in each Month
+Figure 1. Count of Hurricanes in each Month
 \end{center}
 A bar plot has been used to visualize the number of hurricanes in each month. Based on the information provided in Figure 1, it appears that September has the highest number of hurricanes, while there are no hurricanes in February and March. 
 
@@ -94,9 +94,9 @@ A bar plot has been used to visualize the number of hurricanes in each month. Ba
 knitr::include_graphics("eda/fig4-1.png")
 ```
 \begin{center}
-Figure 2. the Average Speed of Hurriances in each Year
+Figure 2. Average Speed of Hurricanes
 \end{center}
-The hurricanes in the dataset have been compared based on their different nature ratings. This number of nature ratings is larger than the number of hurricanes due to the fact that some hurricanes may have different nature ratings at different times.
+
 
 ```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
 knitr::include_graphics("eda/fig5-1.png")
@@ -104,6 +104,7 @@ knitr::include_graphics("eda/fig5-1.png")
 \begin{center}
 Figure 3. the Count of Hurricanes in each Nature
 \end{center}
+The hurricanes in the data have been compared based on their different nature ratings. This number of nature ratings is larger than the number of hurricanes due to the fact that some hurricanes may have different nature ratings at different times.
 According to the information provided in Figure 3, it appears that over 50% of the nature ratings are classified as Tropical Storms. Additionally, this nature rating has the highest average wind speed, which is approximately 60 knots.
 
 ```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
@@ -120,16 +121,12 @@ knitr::include_graphics("eda/map2.png")
 \begin{center}
 Figure 5. Atlantic Windstorm Trajectories by Months
 \end{center}
-Figure 5 shows the Atlantic windstorm trajectories, so the windstorm mainly occurs in August and September. . 
+Figure 5 shows the Atlantic windstorm trajectories, so the windstorm mainly occurs in August and September.
 
 
 ## Data Pre-processing
 
-- Filtered observations that occurred on a 6-hour intervals. (e.g., hour 0, 6, 12, 18)
-
-- Created 3 new variables including the changes of latitude and longitude, as well as the wind speed between the time t and $t-6$ 
-
-- After data cleaning, we obtained 20293 observations and with 699 different hurricanes.
+We selected observations that occurred on a $6$-hour intervals (e.g., hour $0, 6, 12, 18$). Three new variables including the changes of latitude, the changes of longitude, and the changes of wind speed between the time $t$ and $t-6$ is created for analysis purpose. After data cleaning, we obtained $20293$ observations and with $699$ different hurricanes.
 
 # Methodology
 
