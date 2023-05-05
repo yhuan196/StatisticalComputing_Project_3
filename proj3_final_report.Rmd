@@ -94,9 +94,9 @@ A bar plot has been used to visualize the number of hurricanes in each month. Ba
 knitr::include_graphics("eda/fig4-1.png")
 ```
 \begin{center}
-Figure 2. Average Speed of Hurricanes
+Figure 2. the Average Speed of Hurricanes
 \end{center}
-
+As the year increases, the average speed of hurricanes first decreases, then increases a little bit, and finally decreases.
 
 ```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
 knitr::include_graphics("eda/fig5-1.png")
