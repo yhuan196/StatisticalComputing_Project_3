@@ -94,15 +94,15 @@ A bar plot has been used to visualize the number of hurricanes in each month. Ba
 knitr::include_graphics("eda/fig4-1.png")
 ```
 \begin{center}
-Figure 2. the Average Speed of Hurricanes
+Figure 2. Average Speed of Hurricanes
 \end{center}
-As the year increases, the average speed of hurricanes first decreases, then increases a little bit, and finally decreases.
+Figure 2 shows that as the year increases, the average speed of hurricanes first decreases, then increases a little bit, and finally decreases.
 
 ```{r,echo=FALSE,out.width='90%',out.height='70%',fig.align='center'}
 knitr::include_graphics("eda/fig5-1.png")
 ```
 \begin{center}
-Figure 3. the Count of Hurricanes in each Nature
+Figure 3. Count of Hurricanes in each Nature
 \end{center}
 The hurricanes in the data have been compared based on their different nature ratings. This number of nature ratings is larger than the number of hurricanes due to the fact that some hurricanes may have different nature ratings at different times.
 According to the information provided in Figure 3, it appears that over 50% of the nature ratings are classified as Tropical Storms. Additionally, this nature rating has the highest average wind speed, which is approximately 60 knots.
@@ -144,7 +144,7 @@ $$ {\pi(\theta| X)} \propto {\pi(X|\theta)} \times {\pi(\theta)}$$
 The Hierarchical Bayes
 $$ {\pi(\theta, \alpha| X)} \propto {\pi(X|\theta)} \times {\pi(\theta|\alpha)} \times {\pi(\alpha)}$$
 
-The suggested Bayesian model is 
+Our suggested Bayesian model is 
 $$Y_{i}(t+6) =\beta_{0,i}+\beta_{1,i}Y_{i}(t) + \beta_{2,i}\Delta_{i,1}(t)+ \beta_{3,i}\Delta_{i,2}(t) +\beta_{4,i}\Delta_{i,3}(t)  +\boldsymbol{X_i}\gamma+ \epsilon_{i}(t)$$
 
 - where $Y_{i}(t)$ the wind speed at time $t$ (i.e. 6 hours earlier),  $\Delta_{i,1}(t)$, $\Delta_{i,2}(t)$ and $\Delta_{i,3}(t)$ are the changes of latitude, longitude and wind speed between $t$ and $t-6$, and $\epsilon_{i,t}$ follows a  normal distributions with mean zero and variance $\sigma^2$, independent across $t$. 
@@ -212,7 +212,11 @@ The likelihood for Y is:
 $$
 \scriptsize{
 \begin{aligned}
-&f( Y \mid \boldsymbol B,  \boldsymbol\mu, \sigma,  \boldsymbol\Sigma,\gamma) = \prod_{i = 1}^n f( Y_i |\boldsymbol B, \boldsymbol\mu, \boldsymbol\Sigma, \sigma,\gamma)=\\&\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\{-\frac{1}{2}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)^\top (\sigma^2 I)^{-1}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\}\\
+f( Y \mid \boldsymbol B,  \boldsymbol\mu, \sigma,  \boldsymbol\Sigma,\gamma) 
+&= \prod_{i = 1}^n f( Y_i |\boldsymbol B, \boldsymbol\mu, \boldsymbol\Sigma, \sigma,\gamma)\\
+
+&=\prod_{i=1}^n\frac{1}{\sqrt{2\pi}\sigma}\exp\{-\frac{1}{2}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)^\top (\sigma^2 I)^{-1}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\}\\
+
 &\propto  (\sigma^2)^{-\frac{N}{2}} \prod_{i=1}^n\exp\big\{-\frac{1}{2}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)^\top (\sigma^2 I)^{-1}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\big\}
 \end{aligned}
 }
@@ -225,7 +229,8 @@ The likelihood for $B$  is:
 $$
 \scriptsize{
 \begin{aligned}
-&f( \boldsymbol B \mid   \boldsymbol\mu,  \boldsymbol\Sigma) = \prod_{i = 1}^n f( \boldsymbol B |\boldsymbol\mu, \boldsymbol\Sigma)\propto\\&(|\boldsymbol\Sigma|)^{-\frac{N}{2}} \prod_{i=1}^n\exp\big\{-\frac{1}{2}((\beta_i-\mu)^\top \boldsymbol\Sigma^{-1}(\beta_i-\mu))\big\}
+f( \boldsymbol B \mid   \boldsymbol\mu,  \boldsymbol\Sigma) &= \prod_{i = 1}^n f( \boldsymbol B |\boldsymbol\mu, \boldsymbol\Sigma)\\
+&\propto(|\boldsymbol\Sigma|)^{-\frac{N}{2}} \prod_{i=1}^n\exp\big\{-\frac{1}{2}((\beta_i-\mu)^\top \boldsymbol\Sigma^{-1}(\beta_i-\mu))\big\}
 \end{aligned}
 }
 $$
@@ -236,8 +241,8 @@ $$
 By using the Bayesian rule, we can show the posterior distribution for $\boldsymbol{\Theta}$ is,
 $$
 \begin{aligned}
-&\pi(\boldsymbol\Theta| Y) =  P(\boldsymbol B,\boldsymbol \mu, \sigma,\boldsymbol \Sigma, \gamma| Y)  
-\propto \underbrace{L( Y|\boldsymbol B, \sigma)}_{\text{likelihood of } {Y}}\underbrace{L(\boldsymbol B|\boldsymbol\mu,\boldsymbol\Sigma)}_{\text{likelihood of }\textbf{B}}\underbrace{p(\boldsymbol\mu)p(\sigma)p(\boldsymbol\Sigma)p(\gamma)}_{\text{priors}}\\
+\pi(\boldsymbol\Theta| Y) &=  P(\boldsymbol B,\boldsymbol \mu, \sigma,\boldsymbol \Sigma, \gamma| Y)\\  
+&\propto \underbrace{L( Y|\boldsymbol B, \sigma)}_{\text{likelihood of } {Y}}\underbrace{L(\boldsymbol B|\boldsymbol\mu,\boldsymbol\Sigma)}_{\text{likelihood of }\textbf{B}}\underbrace{p(\boldsymbol\mu)p(\sigma)p(\boldsymbol\Sigma)p(\gamma)}_{\text{priors}}\\
 &\propto \frac{1}{\sigma^{N}(\sigma^2+10^2)} \prod_{i=1}^n\exp\big\{-\frac{1}{2}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)^\top (\sigma^2 I)^{-1}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\big\}\\
 &\times \exp\{-\frac{1}{2}\sum_i^n(\beta_i-\mu)^\top \Sigma^{-1}(\beta_i-\mu)\} |\boldsymbol\Sigma^{-1}|^{\frac{N+d+v+1}{2}} \exp\{-\frac{1}{2}tr( \boldsymbol S\boldsymbol\Sigma^{-1})\}|\boldsymbol V|^{-\frac{1}{2}}\\
 &\times \exp\{-\frac{1}{2}\mu^{\top}\boldsymbol V^{-1}\mu\} \\
@@ -259,11 +264,12 @@ $$
 &\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma_i)^\top (\sigma^2 I)^{-1}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\big\}+(\beta_i-\mu)^\top\boldsymbol A(\beta_i-\mu)\}\\
 &\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}({\beta}_i({Z}_i^\top(\sigma^2 I)^{-1}Z_i+{\boldsymbol A}){\beta}_i^\top - 2({Z}_i^\top(\sigma^2 I)^{-1}{Y}_i- {Z}_i^\top\gamma {X}_i(\sigma^2 I)^{-1} +{\mu}{\boldsymbol A}){\beta}_i \\
 &\propto \prod_{i=1}^n \exp\big\{-\frac{1}{2}[{\beta}_i-({Z}_i^\top(\sigma^2 I)^{-1}{Z}_i+{\boldsymbol A})^{-1}({Z}_i^\top(\sigma^2 I)^{-1}{Y}_i-{Z}_i^\top\gamma{X}_i(\sigma^2 I)^{-1} + {\mu}{\boldsymbol A})^\top]^\top \\
-&\times ({Z}_i^\top(\sigma^2 I)^{-1}{Z}_i+{\boldsymbol A}) [{\beta}_i- ({Z}_i^\top(\sigma^2 I)^{-1}{Z}_i+{\boldsymbol A})^{-1}({Z}_i^\top(\sigma^2 I)^{-1}{Y}_i-{Z}_i^\top\gamma{X}_i(\sigma^2 I)^{-1} + {\mu}{\boldsymbol A})^\top]\big\}
+&\times ({Z}_i^\top(\sigma^2 I)^{-1}{Z}_i+{\boldsymbol A}) [{\beta}_i- ({Z}_i^\top(\sigma^2 I)^{-1}{Z}_i+{\boldsymbol A})^{-1}({Z}_i^\top(\sigma^2 I)^{-1}{Y}_i-{Z}_i^\top\gamma{X}_i(\sigma^2 I)^{-1} + {\mu}{\boldsymbol A})^\top]\big\} \\
+&\propto MVN(N^{-1}M,N^{-1})
 \end{aligned}
 $$
 
-$\beta_i \sim MVN(N^{-1}M,N^{-1})$, where $N=\frac{Z_i^\top Z_i}{\sigma^2}+{\boldsymbol A}$, $M=\frac{Z_i^\top Y_i-Z_i^\top X_i\gamma}{\sigma^2}+\mu {\boldsymbol A}$
+where $N=\frac{Z_i^\top Z_i}{\sigma^2}+{\boldsymbol A}$, $M=\frac{Z_i^\top Y_i-Z_i^\top X_i\gamma}{\sigma^2}+\mu {\boldsymbol A}$
 
 
 2. The posterior distribution of ${\mu}$
@@ -272,23 +278,26 @@ $$
 \begin{aligned}
 \pi(\boldsymbol\mu|\boldsymbol B, \sigma,\boldsymbol A, \gamma) & \propto \exp \{-\frac{\mu^\top \boldsymbol V^{-1}\mu}{2}\}\prod_{i=1}^N\exp\{-\frac{(\beta_i-\mu)^\top\boldsymbol A(\beta_i-\mu)}{2}\}\\
 &=\exp\{\sum_i^N-\frac{1}{2}(\mu^\top(\boldsymbol A-\frac{1}{N}\boldsymbol V^{-1})\mu-2\mu^\top\boldsymbol A\beta_i+\beta_i^\top\boldsymbol A\beta_i)\}\\
-&=\exp\{-\frac{1}{2}(\mu^\top(N\boldsymbol A- \boldsymbol V^{-1})\mu-2\mu^\top \sum_i^N(\boldsymbol A\beta_i)+\beta_i^\top \boldsymbol A\beta_i)\}
+&=\exp\{-\frac{1}{2}(\mu^\top(N\boldsymbol A- \boldsymbol V^{-1})\mu-2\mu^\top \sum_i^N(\boldsymbol A\beta_i)+\beta_i^\top \boldsymbol A\beta_i)\}\\
+&\propto MVN(M^{-1}N,M^{-1})
 \end{aligned}
 $$
 
-$\mu \sim MVN(M^{-1}N,M^{-1})$, where $M=NA- V^{-1}$ and $N=\sum_i^N(\boldsymbol A\beta_i)$
+where $M=NA- V^{-1}$ and $N=\sum_i^N(\boldsymbol A\beta_i)$
 
 3. The posterior distribution of ${\Sigma}$
 
 $$
 \begin{aligned}
-\pi({\boldsymbol\Sigma}|{\boldsymbol B} ,{\boldsymbol\mu},{\gamma},\sigma,{Y}) \propto  {|\boldsymbol\Sigma|}^{-\frac{(N+v+d+1)}{2}}\exp\{-\frac{1}{2}(\sum_i^N({\beta_i-\mu})^\top\boldsymbol \Sigma^{-1} ({\beta_i-\mu})+tr({\boldsymbol S\boldsymbol \Sigma^{-1}}))\}\\
-\propto {|\boldsymbol\Sigma|}^{-\frac{(N+v+d+1)}{2}} \exp\{-\frac{1}{2}tr { (\boldsymbol S+\sum_i^N(\beta_i-\mu)(\beta_i-\mu)^\top})\boldsymbol \Sigma^{-1}\}
+\pi({\boldsymbol\Sigma}|{\boldsymbol B} ,{\boldsymbol\mu},{\gamma},\sigma,{Y}) 
+&\propto  {|\boldsymbol\Sigma|}^{-\frac{(N+v+d+1)}{2}}\exp\{-\frac{1}{2}(\sum_i^N({\beta_i-\mu})^\top\boldsymbol \Sigma^{-1} ({\beta_i-\mu})+tr({\boldsymbol S\boldsymbol \Sigma^{-1}}))\}\\
+
+&\propto {|\boldsymbol\Sigma|}^{-\frac{(N+v+d+1)}{2}} \exp\{-\frac{1}{2}tr { (\boldsymbol S+\sum_i^N(\beta_i-\mu)(\beta_i-\mu)^\top})\boldsymbol \Sigma^{-1}\} \\
+&\propto w^{-1}({\boldsymbol S+\sum_i^N(\beta_i-\mu)(\beta_i-\mu)^\top,N+v})
 \end{aligned}
 $$
 
-
-$${\Sigma} \sim w^{-1}({\boldsymbol S+\sum_i^N(\beta_i-\mu)(\beta_i-\mu)^\top,N+v})$$
+where$w^{-1}({\boldsymbol S+\sum_i^N(\beta_i-\mu)(\beta_i-\mu)^\top,N+v})$ is the inverse-Wishart distribution with degrees of freedom $N+v$ and scale matrix $\boldsymbol S+\sum_i^N(\beta_i-\mu)(\beta_i-\mu)^\top$.
 
 \newpage
 
@@ -298,10 +307,13 @@ $$
 \begin{aligned}
 \pi(\gamma|\boldsymbol B,\boldsymbol\mu,\boldsymbol \Sigma,\sigma,{Y})&\propto \prod_{i=1}^N\exp\{-\frac{1}{2}(Y_i-Z_i\beta_i^{T}-X_i\gamma)^\top(\sigma^2I)^{-1}(Y_i-Z_i\beta_i^{T}-X_i\gamma)\} \times \exp\{-\frac{400\gamma^\top\gamma}{2}\}\\
 &\propto \exp\{-\frac{1}{2}\sum_i^N\gamma^\top(X_i^\top\sigma^{-2}IX_i+400N^{-1}I)\gamma-2\gamma^\top(X_i^\top\sigma^{-2}IY_i-X_i^\top\sigma^{-2}IZ_i\beta_i)\\&+
-Y_i^\top\sigma^{-2}IY_i-2Y_i^\top\sigma^{-2}IZ_i\beta_i^{T}+\beta_i^\top Z_i^\top \sigma^{-2}IZ_i\beta_i^{T}\}
+
+Y_i^\top\sigma^{-2}IY_i-2Y_i^\top\sigma^{-2}IZ_i\beta_i^{T}+\beta_i^\top Z_i^\top \sigma^{-2}IZ_i\beta_i^{T}\} \\
+&\propto MVN(M^{-1}N, M^{-1})
+
 \end{aligned}
 $$
-$\gamma \sim MVN(M^{-1}N, M^{-1})$, where $M =\frac{\sum_i^NX_i^\top X_i}{\sigma^2}+400I$ and $N=\frac{\sum_i^N(X_i^\top Y_i-X_i^\top Z_i\beta_i^{T})}{\sigma^2}$ 
+where $M =\frac{\sum_i^NX_i^\top X_i}{\sigma^2}+400I$ and $N=\frac{\sum_i^N(X_i^\top Y_i-X_i^\top Z_i\beta_i^{T})}{\sigma^2}$ 
 
 
 5. The posterior distribution of $\sigma$ 
@@ -313,7 +325,7 @@ $$
 &\times \prod_{i=1}^n\exp\big\{-\frac{1}{2(\sigma^2 I)}({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)^\top ({Y}_i - {Z}_i{\beta}_i^{T}-{X_i}\gamma)\big\}
 \end{aligned}
 $$
-$\sigma$ does not have a close distribution.
+$\sigma$ does not have a closed distribution.
 
 ## MCMC Algorithm
 After deriving the conditional posterior of parameter that we want to estimate, the next step is to apply these conditional posterior to the MCMC Algorithm. Our MCMC algorithm is a hybrid of Metropolis-Hastings and Gibb Sampling. 
