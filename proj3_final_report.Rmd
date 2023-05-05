@@ -428,7 +428,7 @@ Table 2. $95\%$ credible intervals of $\gamma_s$
 
 ### Detecting Increase in Hurricane Wind Speeds over the Years
 
-To detect whether there is an increase in the hurricane wind speeds over the years, we checked whether the $95\% CI$ for the fixed effect of the year variable, $\gamma_10$, is greater than $0$. According to Table 1, it is less than $0$, and thus we conclude there is no evidence to support the claim that hurricane wind speeds have been increasing over the years. 
+To detect whether there is an increase in the hurricane wind speeds over the years, we checked whether the $95\% CI$ for the fixed effect of the year variable, $\gamma_{10}$, is greater than $0$. According to Table 1, it is less than $0$, and thus we conclude there is no evidence to support the claim that hurricane wind speeds have been increasing over the years. 
 
 ## Model Prediction Performance
 
