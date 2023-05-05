@@ -1,7 +1,7 @@
 ---
 title: "Hierarchical Baysian Modeling of Hurricane Trajectories"
 subtitle: "P8160 Group Project 3 - Markov chain Monte Carlo"
-date: "May 2, 2023"
+date: "May 4, 2023"
 author: "Jingchen Chai, Yi Huang, Zining Qi, Ziyi Wang, Ruihan Zhang"
 output:
   pdf_document:
