@@ -487,3 +487,6 @@ Zhang, Z. (2021). A Note on Wishart and Inverse Wishart Priors for Covariance Ma
 
 # Contributions
 
+Jingchen Chai, Yi Huang, and Zining Qi worked collectively on tasks 1-2, especially completing the posterior distribution derivation, the Gibbs sampler, and running the algorithm. Jingchen and Yi were responsible for Gibbs sampling and generating the LaTeX expressions of the likelihood and posterior distribution of the parameters, as well as creating convergence trace plots, histograms, and charts of the estimates. Zining designed the MCMC-Metropolis-Hastings algorithm to obtain the $\sigma^2$ parameter estimates and completed task 4. Ziyi Wang coordinated our meetings, completed task 3, checked and debugged the code, compiled references, and finalized the report. Ruihan Zhang was responsible for exploratory data analysis, help with LaTex expression, and creating the introduction for the presentation and report.
+
+All team members worked on the presentation slides and report write-up.
