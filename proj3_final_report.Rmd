@@ -349,9 +349,9 @@ After defining the Metropolis-Hastings algorithm to generate $\sigma$, we combin
 \For{$k$ = 1 to 5000}
 \State 1. Generate $\boldsymbol \beta_{i}^{k}$ for $i^{th}$ hurricane from $\pi(\textbf{B}|\boldsymbol{Y}, \boldsymbol{\mu}^{k-1},\sigma^{k-1}, \boldsymbol{\Sigma}^{k-1},\boldsymbol{\gamma}^{k-1})$
 \State 2. Generate $\boldsymbol \mu^{k}$ from $\pi(\boldsymbol{\mu}|\boldsymbol{Y}, \textbf{B}^{k},\sigma^{k-1}, \boldsymbol{\Sigma}^{k-1},\boldsymbol{\gamma}^{k-1})$
-\State 3. Generate $\sigma_{k}$ from the Metropolis-Hastings steps
-\State 4. Generate $\boldsymbol \Sigma_{k}$ from $\pi(\boldsymbol{\Sigma}|\boldsymbol{Y}, \textbf{B}_{k},\boldsymbol{\mu}_{k}, \sigma_{k},\boldsymbol{\gamma}_{k-1})$
-\State 5. Generate $\boldsymbol \gamma_{k}$ from $\pi(\boldsymbol{\gamma}|\boldsymbol{Y}, \textbf{B}_{k},\boldsymbol{\mu}_{k},\sigma_{k},\boldsymbol{\Sigma}_{k})$
+\State 3. Generate $\sigma^{k}$ from the Metropolis-Hastings steps
+\State 4. Generate $\boldsymbol \Sigma^{k}$ from $\pi(\boldsymbol{\Sigma}|\boldsymbol{Y}, \textbf{B}^{k},\boldsymbol{\mu}^{k}, \sigma^{k},\boldsymbol{\gamma}^{k-1})$
+\State 5. Generate $\boldsymbol \gamma^{k}$ from $\pi(\boldsymbol{\gamma}|\boldsymbol{Y}, \textbf{B}^{k},\boldsymbol{\mu}^{k},\sigma^{k},\boldsymbol{\Sigma}^{k})$
 \EndFor
 \end{algorithmic}
 \end{algorithm}
